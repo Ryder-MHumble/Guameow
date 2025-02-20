@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 猫爪纹理图案 -->
+  <g fill="currentColor" fill-opacity="0.1">
+    <path d="M20 20 Q25 30 30 20 M35 15 Q40 25 45 15 M50 20 Q55 30 60 20" />
+    <path d="M60 60 Q65 70 70 60 M75 55 Q80 65 85 55 M90 60 Q95 70 100 60" />
+    <path d="M10 80 Q15 90 20 80 M25 75 Q30 85 35 75 M40 80 Q45 90 50 80" />
+  </g>
+</svg>

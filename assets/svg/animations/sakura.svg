@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 樱花花瓣 -->
+  <path d="M12 2C13.5 4 15 5 17 5C15 7 15 9 17 11C15 13 13.5 14 12 16C10.5 14 9 13 7 11C9 9 9 7 7 5C9 5 10.5 4 12 2Z" fill="currentColor">
+    <animate attributeName="opacity" values="1;0.5;1" dur="3s" repeatCount="indefinite"/>
+  </path>
+</svg>

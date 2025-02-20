@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="400" viewBox="0 0 300 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 古风信纸底纹 -->
+  <pattern id="paper_pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M0 0h20v20H0z" fill="none"/>
+    <path d="M10 2l2 2-2 2-2-2z" fill="currentColor" fill-opacity="0.05"/>
+  </pattern>
+  <rect width="300" height="400" fill="url(#paper_pattern)"/>
+</svg>

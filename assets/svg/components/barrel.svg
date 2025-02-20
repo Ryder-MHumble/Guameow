@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="200" viewBox="0 0 120 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 签筒主体 -->
+  <rect x="20" y="20" width="80" height="160" rx="10" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="4"/>
+  
+  <!-- 装饰纹理 -->
+  <path d="M30 40 H90" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/>
+  <path d="M30 80 H90" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/>
+  <path d="M30 120 H90" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/>
+  <path d="M30 160 H90" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/>
+  
+  <!-- 猫爪装饰 -->
+  <path d="M45 15 Q50 25 55 15 M60 10 Q65 20 70 10 M75 15 Q80 25 85 15" 
+        stroke="currentColor" stroke-width="2" fill="none"/>
+</svg>

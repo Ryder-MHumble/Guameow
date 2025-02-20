@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 圆形光点 -->
+  <circle cx="8" cy="8" r="4" fill="currentColor">
+    <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="fill-opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>
