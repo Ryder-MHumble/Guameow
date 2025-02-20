@@ -1,16 +1,74 @@
-# guameow_flutter
+# Guameow 🐱
 
-A new Flutter project.
+一个充满趣味的猫咪主题Flutter应用，集合了运势占卜、猫咪智慧等有趣功能。
 
-## Getting Started
+## ✨ 功能特点
 
-This project is a starting point for a Flutter application.
+### 🎯 每日运势
+- 精美的运势抽签界面
+- 五种不同运势等级（上上签、上吉签、中吉签、小吉签、凶签）
+- 优雅的动画效果和粒子特效
+- 详细的运势解读，包含诗句、吉凶事项和建议
 
-A few resources to get you started if this is your first Flutter project:
+### 🐱 猫咪智慧
+- 独特的猫咪主题界面
+- 智慧问答功能
+- 个性化的猫咪互动
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 🎨 界面设计
+- 精心设计的猫咪主题UI
+- 流畅的动画过渡效果
+- 优雅的配色方案
+- 响应式布局，支持多种设备
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 开始使用
+
+### 环境要求
+- Flutter SDK: ^3.7.0
+- Dart SDK: ^3.0.0
+
+### 安装步骤
+1. 克隆项目
+```bash
+git clone https://github.com/Ryder-MHumble/Guameow.git
+```
+
+2. 安装依赖
+```bash
+cd guameow_flutter
+flutter pub get
+```
+
+3. 运行应用
+```bash
+flutter run
+```
+
+## 📦 主要依赖
+
+- flutter_svg: ^2.0.9 - SVG图像支持
+- flutter_vector_icons: ^2.0.0 - 矢量图标
+- animated_text_kit: ^4.2.2 - 文字动画效果
+- google_fonts: ^6.1.0 - Google字体支持
+
+## 🤝 贡献指南
+
+欢迎提交问题和功能请求！如果您想贡献代码：
+
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
+
+## 📝 开源协议
+
+本项目基于 MIT 协议开源 - 查看 [LICENSE](LICENSE) 文件了解更多细节
+
+## 👥 关于作者
+
+Ryder-MHumble - 一个热爱编程和猫咪的开发者
+
+---
+
+⭐️ 如果您喜欢这个项目，欢迎给它一个star！
