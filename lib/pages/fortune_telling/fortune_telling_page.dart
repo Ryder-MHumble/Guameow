@@ -52,12 +52,32 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
   }
 
   void _onDateSelected(DateTime date) {
-    setState(() {
-      _birthDate = date;
-      _isDatePickerVisible = false;
-    });
+    if (_birthDate != date) {
+      setState(() {
+        _birthDate = date;
+        _isDatePickerVisible = false;
+      });
+    } else {
+      setState(() {
+        _isDatePickerVisible = false;
+      });
+    }
     _animationController.reset();
     _animationController.forward();
+  }
+
+  void _selectBloodType(String type) {
+    if (_bloodType != type) {
+      setState(() {
+        _bloodType = type;
+      });
+      final index = _bloodTypes.indexOf(type);
+      _bloodTypeController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _submitForm() {
@@ -105,34 +125,40 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
         controller: _bloodTypeController,
         itemCount: _bloodTypes.length,
         onPageChanged: (index) {
-          setState(() {
-            _bloodType = _bloodTypes[index];
-          });
+          final type = _bloodTypes[index];
+          if (_bloodType != type) {
+            setState(() {
+              _bloodType = type;
+            });
+          }
         },
         itemBuilder: (context, index) {
           final type = _bloodTypes[index];
           final isSelected = type == _bloodType;
-          return Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.smallRadius),
-                boxShadow: [
-                  if (isSelected)
-                    BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                ],
-              ),
-              child: Text(
-                type,
-                style: AppTheme.bodyStyle.copyWith(
-                  color: isSelected ? Colors.white : Colors.black87,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          return GestureDetector(
+            onTap: () => _selectBloodType(type),
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.smallRadius),
+                  boxShadow: [
+                    if (isSelected)
+                      BoxShadow(
+                        color: AppTheme.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                  ],
+                ),
+                child: Text(
+                  type,
+                  style: AppTheme.bodyStyle.copyWith(
+                    color: isSelected ? Colors.white : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ),
