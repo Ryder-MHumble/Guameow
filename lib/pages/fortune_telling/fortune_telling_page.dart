@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../modules/style/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/custom_date_picker.dart';
+import '../../models/fortune_report.dart';
+import 'fortune_report_page.dart';
 
 class FortuneTellingPage extends StatefulWidget {
   const FortuneTellingPage({Key? key}) : super(key: key);
@@ -84,7 +86,54 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
     if (_formKey.currentState!.validate() &&
         _birthDate != null &&
         _bloodType != null) {
-      // TODO: 调用大模型API进行占卜
+      // TODO: 这里应该调用实际的API获取报告
+      // 这里使用模拟数据演示
+      final report = FortuneReport(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        createdAt: DateTime.now(),
+        birthDate: _birthDate!,
+        bloodType: _bloodType!,
+        level: FortuneLevel.excellent,
+        poem: '春风得意马蹄疾，一日看尽长安花。',
+        poemInterpretation: '这首诗暗示着你将迎来一个充满机遇和喜悦的时期，事业和生活都会有新的突破。',
+        predictions: [
+          FortunePrediction(
+            type: FortuneType.career,
+            description: '职场上将遇到贵人相助，有望获得晋升或加薪的机会。',
+            score: 90,
+            suggestions: [
+              '主动承担重要项目，展现自己的能力',
+              '与同事保持良好的沟通和合作关系',
+              '注意职业发展方向的规划'
+            ],
+          ),
+          FortunePrediction(
+            type: FortuneType.love,
+            description: '感情运势稳定，单身者可能遇到心仪的对象。',
+            score: 85,
+            suggestions: [
+              '多参加社交活动，扩大交友圈',
+              '保持开放和真诚的态度',
+              '适时表达自己的感受'
+            ],
+          ),
+        ],
+        luckySuggestions: [
+          '早起晨练，增强体质',
+          '多与朋友聚会，增进感情',
+          '学习新技能，提升自我'
+        ],
+        luckyItems: ['红色钱包', '猫咪挂饰', '幸运手链'],
+        luckyColors: ['红色', '粉色', '金色'],
+        luckyNumbers: [3, 6, 8],
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FortuneReportPage(report: report),
+        ),
+      );
     }
   }
 

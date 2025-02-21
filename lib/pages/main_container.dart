@@ -13,7 +13,8 @@ class MainContainer extends StatefulWidget {
   State<MainContainer> createState() => _MainContainerState();
 }
 
-class _MainContainerState extends State<MainContainer> with SingleTickerProviderStateMixin {
+class _MainContainerState extends State<MainContainer>
+    with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   late PageController _pageController;
   late AnimationController _controller;
@@ -23,50 +24,57 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
 
   // 主页面列表
   final List<Widget> _pages = const [
-    DailyFortunePage(),     // 每日庙前
-    FortuneTellingPage(),   // 喵咪占卜
+    DailyFortunePage(), // 每日喵签
+    FortuneTellingPage(), // 喵咪占卜
   ];
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(
-      initialPage: 0,
-      viewportFraction: 1.0,
-    );
-    
+    _pageController = PageController(initialPage: 0, viewportFraction: 1.0);
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _glowAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.3)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 1.3,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.3, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 1.3,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
     ]).animate(_controller);
 
     _rotateAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0, end: 0.1)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 0,
+          end: 0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.1, end: -0.1)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: 0.1,
+          end: -0.1,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween<double>(begin: -0.1, end: 0)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween<double>(
+          begin: -0.1,
+          end: 0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25,
       ),
     ]).animate(_controller);
@@ -74,10 +82,7 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
     _colorAnimation = ColorTween(
       begin: AppTheme.primary.withOpacity(0.1),
       end: AppTheme.secondary.withOpacity(0.3),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -107,12 +112,10 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
   void _openCatSagePage() {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const CatSagePage(),
+        pageBuilder:
+            (context, animation, secondaryAnimation) => const CatSagePage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
+          return FadeTransition(opacity: animation, child: child);
         },
       ),
     );
@@ -201,7 +204,7 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(0, '每日庙前', 'assets/svg/nav_icons/粉-描边猫咪.svg'),
+            _buildNavItem(0, '每日喵签', 'assets/svg/nav_icons/粉-描边猫咪.svg'),
             const SizedBox(width: 88),
             _buildNavItem(1, '喵咪占卜', 'assets/svg/nav_icons/粉-星座占卜.svg'),
           ],
@@ -212,7 +215,7 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
 
   Widget _buildNavItem(int index, String label, String iconPath) {
     final isSelected = _currentIndex == index;
-    
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -228,7 +231,10 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
                   duration: const Duration(milliseconds: 200),
                   padding: EdgeInsets.all(isSelected ? 8 : 4),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
+                    color:
+                        isSelected
+                            ? AppTheme.primary.withOpacity(0.1)
+                            : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                   child: SvgPicture.asset(
@@ -246,8 +252,10 @@ class _MainContainerState extends State<MainContainer> with SingleTickerProvider
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
                     fontSize: isSelected ? 13 : 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? AppTheme.primary : const Color(0xFFD8D8D8),
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color:
+                        isSelected ? AppTheme.primary : const Color(0xFFD8D8D8),
                   ),
                   child: Text(label),
                 ),
