@@ -3,9 +3,10 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import '../../modules/style/app_theme.dart';
 import 'dart:math' show Random, sin, pi;
 import 'widgets/fortune_barrel.dart';
-import '../../models/fortune_report.dart';
-import '../../data/mock_fortune_data.dart';
+import 'models/fortune_data.dart';
+import 'data/test_fortune_data.dart';
 import '../fortune_telling/fortune_report_page.dart';
+import '../../models/fortune_report.dart';
 
 class DailyFortunePage extends StatefulWidget {
   const DailyFortunePage({Key? key}) : super(key: key);
@@ -14,196 +15,59 @@ class DailyFortunePage extends StatefulWidget {
   State<DailyFortunePage> createState() => _DailyFortunePageState();
 }
 
-class FortuneData {
-  final String poem;
-  final List<String> goodThings;
-  final List<String> badThings;
-  final String tips;
-  final List<String> tags;
-  final String fortuneLevel;
-  final int fortuneNumber;
-
-  FortuneData({
-    required this.poem,
-    required this.goodThings,
-    required this.badThings,
-    required this.tips,
-    required this.tags,
-    required this.fortuneLevel,
-    required this.fortuneNumber,
-  });
-
-  static final List<FortuneData> _testFortunes = [
-    FortuneData(
-      poem: '春风拂面遇良缘\n心有灵犀一点通',
-      goodThings: ['约会表白', '尝试新发型'],
-      badThings: ['过度纠结', '深夜emo'],
-      tips: '主动出击会有惊喜\n浅粉色穿搭提升气场',
-      tags: ['#好运锦鲤', '#少女心打卡'],
-      fortuneLevel: '上上签',
-      fortuneNumber: 88,
-    ),
-    FortuneData(
-      poem: '乌云散尽见月明\n守得云开见月明',
-      goodThings: ['学习进修', '投资理财'],
-      badThings: ['冲动消费', '情绪失控'],
-      tips: '保持耐心终会有回报\n深蓝色能带来好运',
-      tags: ['#事业运', '#财运亨通'],
-      fortuneLevel: '中吉签',
-      fortuneNumber: 65,
-    ),
-    FortuneData(
-      poem: '明月几时有\n把酒问青天',
-      goodThings: ['独处思考', '创作灵感'],
-      badThings: ['社交应酬', '强求缘分'],
-      tips: '独处时光最适合沉淀\n紫色能激发创造力',
-      tags: ['#艺术灵感', '#心灵成长'],
-      fortuneLevel: '凶签',
-      fortuneNumber: 33,
-    ),
-    FortuneData(
-      poem: '福星高照喜事临\n万事如意步步升',
-      goodThings: ['团队合作', '公开演讲'],
-      badThings: ['独断专行', '操之过急'],
-      tips: '集体智慧能带来惊喜\n金色能增添自信',
-      tags: ['#贵人运', '#团队之星'],
-      fortuneLevel: '上吉签',
-      fortuneNumber: 77,
-    ),
-    FortuneData(
-      poem: '春暖花开好时节\n一切顺遂皆如意',
-      goodThings: ['户外运动', '结识新友'],
-      badThings: ['贪图安逸', '缺乏锻炼'],
-      tips: '适当运动增添活力\n绿色带来好运气',
-      tags: ['#健康运', '#活力四射'],
-      fortuneLevel: '小吉签',
-      fortuneNumber: 55,
-    ),
-  ];
-
-  static int _currentFortuneIndex = 0;
-
-  static FortuneData generate() {
-    // 循环遍历测试运势数据
-    final fortune = _testFortunes[_currentFortuneIndex];
-    _currentFortuneIndex = (_currentFortuneIndex + 1) % _testFortunes.length;
-    return fortune;
-  }
-}
-
-class FortuneBarrelPainter extends CustomPainter {
-  final Color color;
-
-  FortuneBarrelPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = color
-          ..strokeWidth = 1.0
-          ..style = PaintingStyle.stroke;
-
-    // 绘制竖线纹理
-    for (double x = 10; x < size.width; x += 20) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    // 绘制横线纹理
-    for (double y = 10; y < size.height; y += 20) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-
-    // 绘制圆形装饰
-    final circlePaint =
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(size.width / 2, 15), 5, circlePaint);
-  }
-
-  @override
-  bool shouldRepaint(FortuneBarrelPainter oldDelegate) => false;
-}
-
-class _SakuraParticle {
-  double x;
-  double y;
-  final double size;
-  final double velocity;
-
-  _SakuraParticle({
-    required this.x,
-    required this.y,
-    required this.size,
-    required this.velocity,
-  });
-}
-
 class _DailyFortunePageState extends State<DailyFortunePage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _shakeController;
   FortuneData? _currentFortune;
+  late AnimationController _shakeController;
   bool _isShaking = false;
   final List<_SakuraParticle> _sakuraParticles = [];
 
-  // 定义不同签的样式
+  // 运势样式映射
   final Map<String, Map<String, dynamic>> _fortuneStyles = {
     '上上签': {
-      'icon': '✨',
       'color': const Color(0xFFFF69B4),
+      'borderColor': const Color(0xFFFF69B4),
+      'tagColor': const Color(0xFFFFF0F5),
       'gradient': const LinearGradient(
         colors: [Color(0xFFFF69B4), Color(0xFFFFB6C1)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
       ),
-      'borderColor': const Color(0xFFFFB6C1),
-      'tagColor': const Color(0xFFFFF0F5),
+      'icon': '🌸',
     },
     '上吉签': {
-      'icon': '🌟',
-      'color': const Color(0xFF9370DB),
+      'color': const Color(0xFFFF8C00),
+      'borderColor': const Color(0xFFFF8C00),
+      'tagColor': const Color(0xFFFFEFD5),
       'gradient': const LinearGradient(
-        colors: [Color(0xFF9370DB), Color(0xFFE6E6FA)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        colors: [Color(0xFFFF8C00), Color(0xFFFFD700)],
       ),
-      'borderColor': const Color(0xFFE6E6FA),
-      'tagColor': const Color(0xFFF5F0FF),
+      'icon': '✨',
     },
     '中吉签': {
-      'icon': '⭐',
       'color': const Color(0xFF4169E1),
+      'borderColor': const Color(0xFF4169E1),
+      'tagColor': const Color(0xFFF0F8FF),
       'gradient': const LinearGradient(
         colors: [Color(0xFF4169E1), Color(0xFF87CEEB)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
       ),
-      'borderColor': const Color(0xFF87CEEB),
-      'tagColor': const Color(0xFFF0F8FF),
+      'icon': '🌟',
     },
     '小吉签': {
-      'icon': '🍀',
-      'color': const Color(0xFF3CB371),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFF3CB371), Color(0xFF98FB98)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      'borderColor': const Color(0xFF98FB98),
+      'color': const Color(0xFF32CD32),
+      'borderColor': const Color(0xFF32CD32),
       'tagColor': const Color(0xFFF0FFF0),
+      'gradient': const LinearGradient(
+        colors: [Color(0xFF32CD32), Color(0xFF98FB98)],
+      ),
+      'icon': '🍀',
     },
     '凶签': {
-      'icon': '🌧',
-      'color': const Color(0xFF808080),
+      'color': const Color(0xFF800080),
+      'borderColor': const Color(0xFF800080),
+      'tagColor': const Color(0xFFF5F0F5),
       'gradient': const LinearGradient(
-        colors: [Color(0xFF808080), Color(0xFFC0C0C0)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        colors: [Color(0xFF800080), Color(0xFFBA55D3)],
       ),
-      'borderColor': const Color(0xFFC0C0C0),
-      'tagColor': const Color(0xFFF5F5F5),
+      'icon': '🌙',
     },
   };
 
@@ -211,30 +75,38 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   void initState() {
     super.initState();
     _shakeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
+
+    // 初始状态不显示运势
+    _currentFortune = null;
   }
 
   @override
   void dispose() {
     _shakeController.dispose();
-    _sakuraParticles.clear();
     super.dispose();
   }
 
-  Future<void> _handleShake() async {
+  void _handleShake() {
     if (_isShaking) return;
 
-    setState(() => _isShaking = true);
-    _shakeController.forward(from: 0);
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
     setState(() {
-      _isShaking = false;
-      _currentFortune = FortuneData.generate();
-      _addSakuraParticles();
+      _isShaking = true;
+      _sakuraParticles.clear();
+    });
+
+    _shakeController.forward(from: 0).then((_) {
+      setState(() {
+        _isShaking = false;
+        // 随机选择一个新的运势
+        _currentFortune =
+            TestFortuneData.testFortunes[Random().nextInt(
+              TestFortuneData.testFortunes.length,
+            )];
+        _addSakuraParticles();
+      });
     });
   }
 
@@ -271,19 +143,6 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     }
   }
 
-  void _startShaking() {
-    setState(() => _isShaking = true);
-    _shakeController.forward(from: 0);
-
-    Future.delayed(const Duration(milliseconds: 800)).then((_) {
-      setState(() {
-        _isShaking = false;
-        _currentFortune = FortuneData.generate();
-        _addSakuraParticles();
-      });
-    });
-  }
-
   Widget _buildFortuneCard() {
     if (_currentFortune == null) return const SizedBox();
 
@@ -296,7 +155,10 @@ class _DailyFortunePageState extends State<DailyFortunePage>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FortuneReportPage(report: mockFortuneReport),
+            builder:
+                (context) => FortuneReportPage(
+                  report: _convertToFortuneReport(_currentFortune!),
+                ),
           ),
         );
       },
@@ -333,7 +195,9 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       gradient: style['gradient'],
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -457,10 +321,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.compass_calibration,
-                        color: style['color'],
-                      ),
+                      Icon(Icons.compass_calibration, color: style['color']),
                       const SizedBox(width: 8),
                       Text(
                         '运势指南',
@@ -596,10 +457,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        color: style['color'],
-                      ),
+                      Icon(Icons.lightbulb_outline, color: style['color']),
                       const SizedBox(width: 8),
                       Text(
                         '解签小贴士',
@@ -632,27 +490,32 @@ class _DailyFortunePageState extends State<DailyFortunePage>
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _currentFortune!.tags.map((tag) => Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: style['tagColor'],
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: style['borderColor'].withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: style['color'],
-                    ),
-                  ),
-                )).toList(),
+                children:
+                    _currentFortune!.tags
+                        .map(
+                          (tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: style['tagColor'],
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: style['borderColor'].withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: style['color'],
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
 
@@ -706,7 +569,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '今日运势',
+            '今日喵签',
             style: AppTheme.titleStyle.copyWith(
               color: Colors.white,
               fontSize: 20,
@@ -740,10 +603,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTheme.bodyStyle.copyWith(
-            color: Colors.white,
-            fontSize: 14,
-          ),
+          style: AppTheme.bodyStyle.copyWith(color: Colors.white, fontSize: 14),
         ),
       ],
     );
@@ -779,7 +639,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                           _buildFortuneRatioCard(),
                           _buildFortuneCard(),
                         ],
-                      )
+                      ),
                     ),
                   ),
                 ),
@@ -794,7 +654,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
         AnimatedTextKit(
           animatedTexts: [
             TypewriterAnimatedText(
-              '今日运势',
+              '今日喵签',
               textAlign: TextAlign.center,
               textStyle: const TextStyle(
                 fontSize: 28,
@@ -810,7 +670,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           child: FortuneBarrel(
             isShaking: _isShaking,
             onShake: () {
-              if (!_isShaking) _startShaking();
+              if (!_isShaking) _handleShake();
             },
           ),
         ),
@@ -819,11 +679,65 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           opacity: _isShaking ? 0.0 : 1.0,
           duration: const Duration(milliseconds: 200),
           child: Text(
-            '轻触签筒开启今日运势',
+            '轻触签筒开启今日喵签',
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
         ),
       ],
     );
   }
+
+  // 将 FortuneData 转换为 FortuneReport
+  FortuneReport _convertToFortuneReport(FortuneData data) {
+    return FortuneReport(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      createdAt: DateTime.now(),
+      level: FortuneLevel.values.firstWhere(
+        (e) => e.label == data.fortuneLevel,
+        orElse: () => FortuneLevel.good,
+      ),
+      poem: data.poem,
+      poemInterpretation: data.tips,
+      predictions: [
+        FortunePrediction(
+          type: FortuneType.love,
+          score: 95,
+          description: "今日桃花运旺盛",
+          suggestions: data.goodThings,
+        ),
+        FortunePrediction(
+          type: FortuneType.career,
+          score: 88,
+          description: "工作进展顺利",
+          suggestions: data.goodThings,
+        ),
+        FortunePrediction(
+          type: FortuneType.wealth,
+          score: 90,
+          description: "财运不错",
+          suggestions: data.goodThings,
+        ),
+      ],
+      birthDate: DateTime.now(),
+      bloodType: "A",
+      luckySuggestions: data.goodThings,
+      luckyColors: ["粉色", "白色"],
+      luckyNumbers: [6, 8, 9],
+      luckyItems: data.tags,
+    );
+  }
+}
+
+class _SakuraParticle {
+  double x;
+  double y;
+  final double size;
+  final double velocity;
+
+  _SakuraParticle({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.velocity,
+  });
 }

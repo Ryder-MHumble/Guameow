@@ -11,7 +11,8 @@ class FortuneReportPage extends StatefulWidget {
   State<FortuneReportPage> createState() => _FortuneReportPageState();
 }
 
-class _FortuneReportPageState extends State<FortuneReportPage> with SingleTickerProviderStateMixin {
+class _FortuneReportPageState extends State<FortuneReportPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -32,10 +33,7 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
   }
@@ -57,17 +55,10 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
               color: AppTheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: AppTheme.primary,
-              size: 20,
-            ),
+            child: Icon(icon, color: AppTheme.primary, size: 20),
           ),
           const SizedBox(width: 12),
-          Text(
-            title,
-            style: AppTheme.titleStyle.copyWith(fontSize: 18),
-          ),
+          Text(title, style: AppTheme.titleStyle.copyWith(fontSize: 18)),
         ],
       ),
     );
@@ -107,18 +98,17 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
                   style: AppTheme.titleStyle.copyWith(fontSize: 16),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.star,
-                        color: AppTheme.primary,
-                        size: 16,
-                      ),
+                      Icon(Icons.star, color: AppTheme.primary, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${prediction.score}分',
@@ -138,10 +128,7 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  prediction.description,
-                  style: AppTheme.bodyStyle,
-                ),
+                Text(prediction.description, style: AppTheme.bodyStyle),
                 const SizedBox(height: 12),
                 if (prediction.suggestions.isNotEmpty) ...[
                   Text(
@@ -151,21 +138,23 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...prediction.suggestions.map((suggestion) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('• ', style: TextStyle(color: AppTheme.primary)),
-                        Expanded(
-                          child: Text(
-                            suggestion,
-                            style: AppTheme.bodyStyle,
+                  ...prediction.suggestions.map(
+                    (suggestion) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '• ',
+                            style: TextStyle(color: AppTheme.primary),
                           ),
-                        ),
-                      ],
+                          Expanded(
+                            child: Text(suggestion, style: AppTheme.bodyStyle),
+                          ),
+                        ],
+                      ),
                     ),
-                  )),
+                  ),
                 ],
               ],
             ),
@@ -187,7 +176,7 @@ class _FortuneReportPageState extends State<FortuneReportPage> with SingleTicker
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          '今日运势详解',
+          '今日喵签详解',
           style: AppTheme.titleStyle.copyWith(fontSize: 18),
         ),
         centerTitle: true,

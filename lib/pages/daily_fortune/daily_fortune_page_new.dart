@@ -67,48 +67,47 @@ class DailyFortunePageNew extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    report.poemInterpretation,
-                    style: AppTheme.bodyStyle,
-                  ),
+                  Text(report.poemInterpretation, style: AppTheme.bodyStyle),
                   const SizedBox(height: 24),
                   const Divider(),
                   const SizedBox(height: 24),
                   Text(
-                    '今日运势',
+                    '今日喵签',
                     style: AppTheme.titleStyle.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 16),
-                  ...report.predictions.map((prediction) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            prediction.type.label,
-                            style: AppTheme.bodyStyle,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${prediction.score}分',
-                            style: AppTheme.bodyStyle.copyWith(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold,
+                  ...report.predictions.map(
+                    (prediction) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              prediction.type.label,
+                              style: AppTheme.bodyStyle,
                             ),
                           ),
-                        ),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${prediction.score}分',
+                              style: AppTheme.bodyStyle.copyWith(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  )),
+                  ),
                   const SizedBox(height: 24),
                   Center(
                     child: Text(
