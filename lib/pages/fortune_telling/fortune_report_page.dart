@@ -33,18 +33,14 @@ class _FortuneReportPageState extends State<FortuneReportPage>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller!,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller!, curve: Curves.easeOut));
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller!,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _controller!, curve: Curves.easeOutCubic),
+    );
 
     _controller!.forward();
   }
@@ -142,31 +138,41 @@ class _FortuneReportPageState extends State<FortuneReportPage>
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: const Color(0xFFFF97C1), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                '开运指南',
-                style: AppTheme.titleStyle.copyWith(fontSize: 16),
+              Icon(
+                Icons.auto_awesome,
+                color: const Color(0xFFFF97C1),
+                size: 20,
               ),
+              const SizedBox(width: 8),
+              Text('开运指南', style: AppTheme.titleStyle.copyWith(fontSize: 16)),
             ],
           ),
           const SizedBox(height: 16),
           // 吉利物品
           if (widget.report.luckyItems.isNotEmpty) ...[
-            _buildLuckySubSection('吉利物品', Icons.card_giftcard, 
-              widget.report.luckyItems.join('、')),
+            _buildLuckySubSection(
+              '吉利物品',
+              Icons.card_giftcard,
+              widget.report.luckyItems.join('、'),
+            ),
             const SizedBox(height: 12),
           ],
           // 吉利颜色
           if (widget.report.luckyColors.isNotEmpty) ...[
-            _buildLuckySubSection('吉利颜色', Icons.palette, 
-              widget.report.luckyColors.join('、')),
+            _buildLuckySubSection(
+              '吉利颜色',
+              Icons.palette,
+              widget.report.luckyColors.join('、'),
+            ),
             const SizedBox(height: 12),
           ],
           // 吉利数字
           if (widget.report.luckyNumbers.isNotEmpty) ...[
-            _buildLuckySubSection('吉利数字', Icons.format_list_numbered, 
-              widget.report.luckyNumbers.map((n) => n.toString()).join('、')),
+            _buildLuckySubSection(
+              '吉利数字',
+              Icons.format_list_numbered,
+              widget.report.luckyNumbers.map((n) => n.toString()).join('、'),
+            ),
           ],
         ],
       ),
@@ -192,15 +198,10 @@ class _FortuneReportPageState extends State<FortuneReportPage>
             children: [
               Text(
                 title,
-                style: AppTheme.bodyStyle.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTheme.bodyStyle.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              Text(
-                content,
-                style: AppTheme.bodyStyle,
-              ),
+              Text(content, style: AppTheme.bodyStyle),
             ],
           ),
         ),
@@ -210,7 +211,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
 
   Widget _buildHeaderCard() {
     final levelColor = _getLevelColor(widget.report.level);
-    
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.all(20),
@@ -279,7 +280,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
   Widget _buildPredictionCard(FortunePrediction prediction) {
     final typeColor = _getTypeColor(prediction.type);
     final levelColor = _getLevelColor(widget.report.level);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
@@ -360,9 +361,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
               children: [
                 Text(
                   prediction.description,
-                  style: AppTheme.bodyStyle.copyWith(
-                    color: Colors.black54,
-                  ),
+                  style: AppTheme.bodyStyle.copyWith(color: Colors.black54),
                 ),
                 const SizedBox(height: 12),
                 if (prediction.suggestions.isNotEmpty) ...[
@@ -380,10 +379,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '• ',
-                            style: TextStyle(color: typeColor),
-                          ),
+                          Text('• ', style: TextStyle(color: typeColor)),
                           Expanded(
                             child: Text(
                               suggestion,
@@ -440,11 +436,11 @@ class _FortuneReportPageState extends State<FortuneReportPage>
               children: [
                 _buildHeaderCard(),
                 // 运势预测
-                _buildSectionTitle('运势预测', Icons.visibility),
+                // _buildSectionTitle('运势预测', Icons.visibility),
                 ...widget.report.predictions.map(_buildPredictionCard),
 
                 // 开运指南
-                _buildSectionTitle('开运指南', Icons.auto_awesome),
+                // _buildSectionTitle('开运指南', Icons.auto_awesome),
                 _buildLuckyItemsSection(),
 
                 const SizedBox(height: 20),

@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'modules/style/app_theme.dart';
 import 'pages/main_container.dart';
+import 'pages/splash/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guameow',
-      theme: AppTheme.lightTheme,
-      home: const MainContainer(),
+      title: '卦喵',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.pink, fontFamily: 'PingFang SC'),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/home': (context) => const MainContainer(),
+      },
     );
   }
 }
@@ -60,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), 
+      ),
     );
   }
 }
