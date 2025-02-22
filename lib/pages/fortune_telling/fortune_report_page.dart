@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/fortune_report.dart';
 import '../../modules/style/app_theme.dart';
 
@@ -13,35 +14,86 @@ class FortuneReportPage extends StatefulWidget {
 
 class _FortuneReportPageState extends State<FortuneReportPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  AnimationController? _controller;
+  Animation<double>? _fadeAnimation;
+  Animation<Offset>? _slideAnimation;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
+  }
+
+  void _setupAnimations() {
     _controller = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller!,
       curve: Curves.easeOut,
-    );
+    ));
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.2),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    ).animate(CurvedAnimation(
+      parent: _controller!,
+      curve: Curves.easeOutCubic,
+    ));
 
-    _controller.forward();
+    _controller!.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
+  }
+
+  Color _getLevelColor(FortuneLevel level) {
+    switch (level) {
+      case FortuneLevel.excellent:
+        return const Color(0xFFFF69B4); // 上上签 - 粉色
+      case FortuneLevel.great:
+        return const Color(0xFFFF8C00); // 上吉签 - 橙色
+      case FortuneLevel.good:
+        return const Color(0xFF4169E1); // 中吉签 - 蓝色
+      case FortuneLevel.fair:
+        return const Color(0xFF98FB98); // 小吉签 - 绿色
+      case FortuneLevel.bad:
+        return const Color(0xFF808080); // 凶签 - 灰色
+    }
+  }
+
+  Color _getTypeColor(FortuneType type) {
+    switch (type) {
+      case FortuneType.love:
+        return const Color(0xFFFF97C1);
+      case FortuneType.career:
+        return const Color(0xFF7EC2FF);
+      case FortuneType.wealth:
+        return const Color(0xFFFFB366);
+      case FortuneType.health:
+        return const Color(0xFF90EE90);
+    }
+  }
+
+  String _getFortuneTypeIcon(FortuneType type) {
+    switch (type) {
+      case FortuneType.love:
+        return 'assets/icons/love.svg';
+      case FortuneType.career:
+        return 'assets/icons/career.svg';
+      case FortuneType.wealth:
+        return 'assets/icons/wealth.svg';
+      case FortuneType.health:
+        return 'assets/icons/health.svg';
+    }
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {
@@ -52,19 +104,182 @@ class _FortuneReportPageState extends State<FortuneReportPage>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
+              color: const Color(0xFFFF97C1).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppTheme.primary, size: 20),
+            child: Icon(icon, color: const Color(0xFFFF97C1), size: 20),
           ),
           const SizedBox(width: 12),
-          Text(title, style: AppTheme.titleStyle.copyWith(fontSize: 18)),
+          Text(
+            title,
+            style: AppTheme.titleStyle.copyWith(
+              fontSize: 18,
+              color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLuckyItemsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF97C1).withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, color: const Color(0xFFFF97C1), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                '开运指南',
+                style: AppTheme.titleStyle.copyWith(fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 吉利物品
+          if (widget.report.luckyItems.isNotEmpty) ...[
+            _buildLuckySubSection('吉利物品', Icons.card_giftcard, 
+              widget.report.luckyItems.join('、')),
+            const SizedBox(height: 12),
+          ],
+          // 吉利颜色
+          if (widget.report.luckyColors.isNotEmpty) ...[
+            _buildLuckySubSection('吉利颜色', Icons.palette, 
+              widget.report.luckyColors.join('、')),
+            const SizedBox(height: 12),
+          ],
+          // 吉利数字
+          if (widget.report.luckyNumbers.isNotEmpty) ...[
+            _buildLuckySubSection('吉利数字', Icons.format_list_numbered, 
+              widget.report.luckyNumbers.map((n) => n.toString()).join('、')),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLuckySubSection(String title, IconData icon, String content) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF97C1).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: const Color(0xFFFF97C1), size: 16),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppTheme.bodyStyle.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                content,
+                style: AppTheme.bodyStyle,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderCard() {
+    final levelColor = _getLevelColor(widget.report.level);
+    
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: levelColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20, bottom: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star, color: levelColor, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  widget.report.level.label,
+                  style: TextStyle(
+                    color: levelColor,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.star, color: levelColor, size: 20),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Text(
+              widget.report.poem,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                height: 1.8,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (widget.report.poemInterpretation.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: 20,
+                top: 8,
+              ),
+              child: Text(
+                widget.report.poemInterpretation,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.6,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildPredictionCard(FortunePrediction prediction) {
+    final typeColor = _getTypeColor(prediction.type);
+    final levelColor = _getLevelColor(widget.report.level);
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
@@ -72,7 +287,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.1),
+            color: typeColor.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -84,7 +299,7 @@ class _FortuneReportPageState extends State<FortuneReportPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.05),
+              color: typeColor.withOpacity(0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -93,9 +308,24 @@ class _FortuneReportPageState extends State<FortuneReportPage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  prediction.type.label,
-                  style: AppTheme.titleStyle.copyWith(fontSize: 16),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      _getFortuneTypeIcon(prediction.type),
+                      width: 24,
+                      height: 24,
+                      color: typeColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      prediction.type.label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: typeColor,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -103,17 +333,17 @@ class _FortuneReportPageState extends State<FortuneReportPage>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.1),
+                    color: levelColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.star, color: AppTheme.primary, size: 16),
+                      Icon(Icons.star, color: levelColor, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${prediction.score}分',
-                        style: AppTheme.bodyStyle.copyWith(
-                          color: AppTheme.primary,
+                        style: TextStyle(
+                          color: levelColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -128,13 +358,19 @@ class _FortuneReportPageState extends State<FortuneReportPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(prediction.description, style: AppTheme.bodyStyle),
+                Text(
+                  prediction.description,
+                  style: AppTheme.bodyStyle.copyWith(
+                    color: Colors.black54,
+                  ),
+                ),
                 const SizedBox(height: 12),
                 if (prediction.suggestions.isNotEmpty) ...[
                   Text(
-                    '喵咪建议：',
+                    '卦喵建议：',
                     style: AppTheme.bodyStyle.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: Colors.black54,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -144,12 +380,17 @@ class _FortuneReportPageState extends State<FortuneReportPage>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '• ',
-                            style: TextStyle(color: AppTheme.primary),
+                            style: TextStyle(color: typeColor),
                           ),
                           Expanded(
-                            child: Text(suggestion, style: AppTheme.bodyStyle),
+                            child: Text(
+                              suggestion,
+                              style: AppTheme.bodyStyle.copyWith(
+                                color: Colors.black54,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -166,86 +407,45 @@ class _FortuneReportPageState extends State<FortuneReportPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_fadeAnimation == null || _slideAnimation == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFFFF5F7),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black54),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           '今日喵签详解',
-          style: AppTheme.titleStyle.copyWith(fontSize: 18),
+          style: AppTheme.titleStyle.copyWith(
+            fontSize: 18,
+            color: Colors.black54,
+          ),
         ),
         centerTitle: true,
       ),
       body: FadeTransition(
-        opacity: _fadeAnimation,
+        opacity: _fadeAnimation!,
         child: SlideTransition(
-          position: _slideAnimation,
+          position: _slideAnimation!,
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 运势等级和日期
-                Container(
-                  margin: const EdgeInsets.all(20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primary.withOpacity(0.1),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            color: AppTheme.primary,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.report.level.label,
-                            style: AppTheme.titleStyle.copyWith(
-                              fontSize: 28,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        widget.report.poem,
-                        style: AppTheme.titleStyle.copyWith(fontSize: 16),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        widget.report.poemInterpretation,
-                        style: AppTheme.bodyStyle.copyWith(
-                          color: Colors.black54,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-
+                _buildHeaderCard(),
                 // 运势预测
                 _buildSectionTitle('运势预测', Icons.visibility),
                 ...widget.report.predictions.map(_buildPredictionCard),
+
+                // 开运指南
+                _buildSectionTitle('开运指南', Icons.auto_awesome),
+                _buildLuckyItemsSection(),
 
                 const SizedBox(height: 20),
               ],

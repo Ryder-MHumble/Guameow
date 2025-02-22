@@ -114,23 +114,14 @@ class _CatNavigationBarState extends State<CatNavigationBar>
           return Transform.scale(
             scale: 1 - _controller.value * 0.1,
             child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive ? _activeColor : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: _activeColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.catching_pokemon,
-                color: isActive ? Colors.white : _activeColor,
-                size: 32,
+              width: 60,
+              height: 60,
+              child: CustomPaint(
+                painter: CatPawPainter(
+                  color: isActive ? Colors.white : _activeColor,
+                  shadowColor: _activeColor.withOpacity(0.3),
+                  backgroundColor: isActive ? _activeColor : Colors.white,
+                ),
               ),
             ),
           );
@@ -175,5 +166,85 @@ class _CatNavigationBarState extends State<CatNavigationBar>
         ),
       ],
     );
+  }
+}
+
+class CatPawPainter extends CustomPainter {
+  final Color color;
+  final Color shadowColor;
+  final Color backgroundColor;
+
+  CatPawPainter({
+    required this.color,
+    required this.shadowColor,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.fill;
+
+    // Add shadow
+    canvas.drawShadow(
+      Path()
+        ..addOval(Rect.fromCircle(
+          center: Offset(size.width / 2, size.height / 2),
+          radius: size.width / 2,
+        )),
+      shadowColor,
+      4,
+      true,
+    );
+
+    // Draw main circle
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width / 2,
+      paint,
+    );
+
+    paint.color = color;
+
+    // Draw paw pads
+    final centerPadRadius = size.width * 0.2;
+    final smallPadRadius = size.width * 0.15;
+    final distance = size.width * 0.25;
+
+    // Center pad
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2 + distance * 0.3),
+      centerPadRadius,
+      paint,
+    );
+
+    // Top pad
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2 - distance),
+      smallPadRadius,
+      paint,
+    );
+
+    // Left pad
+    canvas.drawCircle(
+      Offset(size.width / 2 - distance, size.height / 2),
+      smallPadRadius,
+      paint,
+    );
+
+    // Right pad
+    canvas.drawCircle(
+      Offset(size.width / 2 + distance, size.height / 2),
+      smallPadRadius,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CatPawPainter oldDelegate) {
+    return color != oldDelegate.color ||
+        shadowColor != oldDelegate.shadowColor ||
+        backgroundColor != oldDelegate.backgroundColor;
   }
 }
