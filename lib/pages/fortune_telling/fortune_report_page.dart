@@ -6,7 +6,7 @@ import '../../modules/style/app_theme.dart';
 class FortuneReportPage extends StatefulWidget {
   final FortuneReport report;
 
-  const FortuneReportPage({Key? key, required this.report}) : super(key: key);
+  const FortuneReportPage({super.key, required this.report});
 
   @override
   State<FortuneReportPage> createState() => _FortuneReportPageState();

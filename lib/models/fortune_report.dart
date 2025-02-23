@@ -1,15 +1,17 @@
-import 'package:flutter/foundation.dart';
-
 /// 喵签等级
 enum FortuneLevel {
   /// 上上签
   excellent('上上签'),
+
   /// 上吉签
   great('上吉签'),
+
   /// 中吉签
   good('中吉签'),
+
   /// 小吉签
   fair('小吉签'),
+
   /// 凶签
   bad('凶签');
 
@@ -32,10 +34,13 @@ enum FortuneType {
 class FortunePrediction {
   /// 运势类型
   final FortuneType type;
+
   /// 运势描述
   final String description;
+
   /// 运势评分（0-100）
   final int score;
+
   /// 喵咪建议
   final List<String> suggestions;
 
@@ -70,26 +75,37 @@ class FortunePrediction {
 class FortuneReport {
   /// 报告ID
   final String id;
+
   /// 生成时间
   final DateTime createdAt;
+
   /// 用户生日
   final DateTime birthDate;
+
   /// 用户血型
   final String bloodType;
+
   /// 整体运势等级
   final FortuneLevel level;
+
   /// 喵签诗句
   final String poem;
+
   /// 诗句解读
   final String poemInterpretation;
+
   /// 各项运势预测
   final List<FortunePrediction> predictions;
+
   /// 开运建议
   final List<String> luckySuggestions;
+
   /// 吉利物品
   final List<String> luckyItems;
+
   /// 吉利颜色
   final List<String> luckyColors;
+
   /// 吉利数字
   final List<int> luckyNumbers;
 
@@ -120,9 +136,10 @@ class FortuneReport {
       ),
       poem: json['poem'] as String,
       poemInterpretation: json['poem_interpretation'] as String,
-      predictions: (json['predictions'] as List)
-          .map((e) => FortunePrediction.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      predictions:
+          (json['predictions'] as List)
+              .map((e) => FortunePrediction.fromJson(e as Map<String, dynamic>))
+              .toList(),
       luckySuggestions: List<String>.from(json['lucky_suggestions'] as List),
       luckyItems: List<String>.from(json['lucky_items'] as List),
       luckyColors: List<String>.from(json['lucky_colors'] as List),

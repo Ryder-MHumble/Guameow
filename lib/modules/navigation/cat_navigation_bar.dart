@@ -6,10 +6,10 @@ class CatNavigationBar extends StatefulWidget {
   final Function(int) onTap;
 
   const CatNavigationBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<CatNavigationBar> createState() => _CatNavigationBarState();
@@ -22,26 +22,14 @@ class _CatNavigationBarState extends State<CatNavigationBar>
   static const Color _inactiveColor = Color(0xFFD8D8D8);
 
   final List<Map<String, dynamic>> _items = [
-    {
-      'label': '每日喵签',
-      'icon': Icons.pets,
-    },
-    {
-      'label': '喵咪占卜',
-      'icon': Icons.auto_awesome,
-    },
+    {'label': '每日喵签', 'icon': Icons.pets},
+    {'label': '喵咪占卜', 'icon': Icons.auto_awesome},
     {
       'label': '喵仙人',
       'icon': Icons.catching_pokemon, // 更可爱的猫头图标
     },
-    {
-      'label': '喵签报告',
-      'icon': Icons.history,
-    },
-    {
-      'label': '占卜报告',
-      'icon': Icons.assessment,
-    },
+    {'label': '喵签报告', 'icon': Icons.history},
+    {'label': '占卜报告', 'icon': Icons.assessment},
   ];
 
   @override
@@ -59,9 +47,13 @@ class _CatNavigationBarState extends State<CatNavigationBar>
     super.dispose();
   }
 
-  Widget _buildNavItem(Map<String, dynamic> item, int index, {bool isCenter = false}) {
+  Widget _buildNavItem(
+    Map<String, dynamic> item,
+    int index, {
+    bool isCenter = false,
+  }) {
     final isActive = widget.currentIndex == index;
-    
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -85,7 +77,8 @@ class _CatNavigationBarState extends State<CatNavigationBar>
                     item['label'] as String,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight:
+                          isActive ? FontWeight.w600 : FontWeight.normal,
                       color: isActive ? _activeColor : _inactiveColor,
                     ),
                   ),
@@ -100,7 +93,7 @@ class _CatNavigationBarState extends State<CatNavigationBar>
 
   Widget _buildFloatingActionButton() {
     final isActive = widget.currentIndex == 2;
-    
+
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -113,7 +106,7 @@ class _CatNavigationBarState extends State<CatNavigationBar>
         builder: (context, child) {
           return Transform.scale(
             scale: 1 - _controller.value * 0.1,
-            child: Container(
+            child: SizedBox(
               width: 60,
               height: 60,
               child: CustomPaint(
@@ -159,9 +152,7 @@ class _CatNavigationBarState extends State<CatNavigationBar>
           bottom: 16,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildFloatingActionButton(),
-            ],
+            children: [_buildFloatingActionButton()],
           ),
         ),
       ],
@@ -182,17 +173,19 @@ class CatPawPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.fill;
+    final paint =
+        Paint()
+          ..color = backgroundColor
+          ..style = PaintingStyle.fill;
 
     // Add shadow
     canvas.drawShadow(
-      Path()
-        ..addOval(Rect.fromCircle(
+      Path()..addOval(
+        Rect.fromCircle(
           center: Offset(size.width / 2, size.height / 2),
           radius: size.width / 2,
-        )),
+        ),
+      ),
       shadowColor,
       4,
       true,

@@ -9,13 +9,13 @@ class AnimatedSVG extends StatefulWidget {
   final Duration duration;
 
   const AnimatedSVG({
-    Key? key,
+    super.key,
     required this.assetPath,
     this.width,
     this.height,
     this.color,
     this.duration = const Duration(milliseconds: 800),
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedSVG> createState() => _AnimatedSVGState();
@@ -29,10 +29,7 @@ class _AnimatedSVGState extends State<AnimatedSVG>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
   }
 
   @override
@@ -64,9 +61,10 @@ class _AnimatedSVGState extends State<AnimatedSVG>
       widget.assetPath,
       width: widget.width,
       height: widget.height,
-      colorFilter: widget.color != null
-          ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
-          : null,
+      colorFilter:
+          widget.color != null
+              ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
+              : null,
       placeholderBuilder: (context) => const SizedBox.shrink(),
     );
   }

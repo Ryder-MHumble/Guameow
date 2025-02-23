@@ -7,7 +7,7 @@ import 'fortune_telling/fortune_telling_page.dart';
 import 'cat_sage/cat_sage_page.dart';
 
 class MainContainer extends StatefulWidget {
-  const MainContainer({Key? key}) : super(key: key);
+  const MainContainer({super.key});
 
   @override
   State<MainContainer> createState() => _MainContainerState();

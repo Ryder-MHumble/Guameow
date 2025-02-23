@@ -9,7 +9,7 @@ import '../fortune_telling/fortune_report_page.dart';
 import '../../models/fortune_report.dart';
 
 class DailyFortunePage extends StatefulWidget {
-  const DailyFortunePage({Key? key}) : super(key: key);
+  const DailyFortunePage({super.key});
 
   @override
   State<DailyFortunePage> createState() => _DailyFortunePageState();
@@ -383,7 +383,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              )).toList(),
+                              )),
                             ],
                           ),
                         ),
@@ -429,7 +429,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              )).toList(),
+                              )),
                             ],
                           ),
                         ),

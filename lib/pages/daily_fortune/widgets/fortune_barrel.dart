@@ -6,17 +6,14 @@ class FortuneBarrel extends StatefulWidget {
   final VoidCallback? onShake;
   final bool isShaking;
 
-  const FortuneBarrel({
-    Key? key,
-    this.onShake,
-    required this.isShaking,
-  }) : super(key: key);
+  const FortuneBarrel({super.key, this.onShake, required this.isShaking});
 
   @override
   State<FortuneBarrel> createState() => _FortuneBarrelState();
 }
 
-class _FortuneBarrelState extends State<FortuneBarrel> with SingleTickerProviderStateMixin {
+class _FortuneBarrelState extends State<FortuneBarrel>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _shakeAnimation;
   bool _isPressed = false;
@@ -31,18 +28,24 @@ class _FortuneBarrelState extends State<FortuneBarrel> with SingleTickerProvider
 
     _shakeAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: -0.15)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(
+          begin: 0.0,
+          end: -0.15,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25.0,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: -0.15, end: 0.15)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(
+          begin: -0.15,
+          end: 0.15,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 50.0,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 0.15, end: 0.0)
-            .chain(CurveTween(curve: Curves.easeInOut)),
+        tween: Tween(
+          begin: 0.15,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 25.0,
       ),
     ]).animate(_controller);
@@ -151,14 +154,12 @@ class _FortuneBarrelState extends State<FortuneBarrel> with SingleTickerProvider
                 height: 220,
                 fit: BoxFit.contain,
               ),
-              
+
               // 点击涟漪效果
               if (_isPressed)
                 Positioned.fill(
                   child: CustomPaint(
-                    painter: RipplePainter(
-                      color: Colors.pink.withOpacity(0.1),
-                    ),
+                    painter: RipplePainter(color: Colors.pink.withOpacity(0.1)),
                   ),
                 ),
             ],
@@ -176,9 +177,10 @@ class RipplePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
 
     canvas.drawRRect(
       RRect.fromRectAndRadius(

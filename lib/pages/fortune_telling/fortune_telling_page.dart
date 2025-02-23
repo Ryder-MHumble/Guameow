@@ -6,7 +6,7 @@ import '../../models/fortune_report.dart';
 import 'fortune_report_page.dart';
 
 class FortuneTellingPage extends StatefulWidget {
-  const FortuneTellingPage({Key? key}) : super(key: key);
+  const FortuneTellingPage({super.key});
 
   @override
   State<FortuneTellingPage> createState() => _FortuneTellingPageState();
@@ -19,7 +19,7 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
   String? _bloodType;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  PageController _bloodTypeController = PageController(
+  final PageController _bloodTypeController = PageController(
     viewportFraction: 0.3,
     initialPage: 0,
   );
@@ -101,28 +101,16 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
             type: FortuneType.career,
             description: '职场上将遇到贵人相助，有望获得晋升或加薪的机会。',
             score: 90,
-            suggestions: [
-              '主动承担重要项目，展现自己的能力',
-              '与同事保持良好的沟通和合作关系',
-              '注意职业发展方向的规划'
-            ],
+            suggestions: ['主动承担重要项目，展现自己的能力', '与同事保持良好的沟通和合作关系', '注意职业发展方向的规划'],
           ),
           FortunePrediction(
             type: FortuneType.love,
             description: '感情运势稳定，单身者可能遇到心仪的对象。',
             score: 85,
-            suggestions: [
-              '多参加社交活动，扩大交友圈',
-              '保持开放和真诚的态度',
-              '适时表达自己的感受'
-            ],
+            suggestions: ['多参加社交活动，扩大交友圈', '保持开放和真诚的态度', '适时表达自己的感受'],
           ),
         ],
-        luckySuggestions: [
-          '早起晨练，增强体质',
-          '多与朋友聚会，增进感情',
-          '学习新技能，提升自我'
-        ],
+        luckySuggestions: ['早起晨练，增强体质', '多与朋友聚会，增进感情', '学习新技能，提升自我'],
         luckyItems: ['红色钱包', '猫咪挂饰', '幸运手链'],
         luckyColors: ['红色', '粉色', '金色'],
         luckyNumbers: [3, 6, 8],
@@ -189,7 +177,10 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
             child: Center(
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppTheme.primary : Colors.white,
                   borderRadius: BorderRadius.circular(AppTheme.smallRadius),
@@ -206,7 +197,8 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
                   type,
                   style: AppTheme.bodyStyle.copyWith(
                     color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),

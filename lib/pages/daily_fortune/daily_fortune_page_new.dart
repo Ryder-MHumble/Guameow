@@ -5,7 +5,7 @@ import '../../data/mock_fortune_data.dart';
 import '../fortune_telling/fortune_report_page.dart';
 
 class DailyFortunePageNew extends StatelessWidget {
-  const DailyFortunePageNew({Key? key}) : super(key: key);
+  const DailyFortunePageNew({super.key});
 
   Widget _buildFortuneCard(BuildContext context, FortuneReport report) {
     return GestureDetector(
