@@ -24,7 +24,8 @@ enum FortuneType {
   love('感情'),
   career('事业'),
   wealth('财运'),
-  health('健康');
+  health('健康'),
+  study('学业');
 
   final String label;
   const FortuneType(this.label);

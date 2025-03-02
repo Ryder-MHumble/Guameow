@@ -2,9 +2,33 @@ import 'package:flutter/material.dart';
 import 'modules/style/app_theme.dart';
 import 'pages/main_container.dart';
 import 'pages/splash/splash_screen.dart';
+import 'dart:developer' as developer;
 
 void main() {
   runApp(const MyApp());
+}
+
+// 添加导航器观察者以便调试导航问题
+class NavigatorObserverWithLogging extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    developer.log('didPush: ${route.settings.name}, previousRoute: ${previousRoute?.settings.name}');
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    developer.log('didPop: ${route.settings.name}, previousRoute: ${previousRoute?.settings.name}');
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    developer.log('didRemove: ${route.settings.name}, previousRoute: ${previousRoute?.settings.name}');
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    developer.log('didReplace: new - ${newRoute?.settings.name}, old - ${oldRoute?.settings.name}');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -15,6 +39,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '卦喵',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [NavigatorObserverWithLogging()],
+      navigatorKey: GlobalKey<NavigatorState>(), // 添加全局导航键
       theme: ThemeData(primarySwatch: Colors.pink, fontFamily: 'PingFang SC'),
       initialRoute: '/',
       routes: {

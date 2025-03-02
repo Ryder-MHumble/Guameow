@@ -76,6 +76,8 @@ class _FortuneReportPageState extends State<FortuneReportPage>
         return const Color(0xFFFFB366);
       case FortuneType.health:
         return const Color(0xFF90EE90);
+      case FortuneType.study:
+        return const Color(0xFFA78BFA); // 学业运势 - 紫色
     }
   }
 
@@ -89,6 +91,8 @@ class _FortuneReportPageState extends State<FortuneReportPage>
         return 'assets/icons/wealth.svg';
       case FortuneType.health:
         return 'assets/icons/health.svg';
+      case FortuneType.study:
+        return 'assets/icons/study.svg'; // 如果没有可以使用备用图标
     }
   }
 

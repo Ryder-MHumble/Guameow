@@ -3,7 +3,8 @@ import '../../modules/style/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'widgets/custom_date_picker.dart';
 import '../../models/fortune_report.dart';
-import 'fortune_report_page.dart';
+import '../../services/fortune_service.dart';
+import 'fortune_telling_report_page.dart';
 
 class FortuneTellingPage extends StatefulWidget {
   const FortuneTellingPage({super.key});
@@ -82,46 +83,89 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
     }
   }
 
-  void _submitForm() {
+  void _submitForm() async {
     if (_formKey.currentState!.validate() &&
         _birthDate != null &&
         _bloodType != null) {
-      // TODO: 这里应该调用实际的API获取报告
-      // 这里使用模拟数据演示
-      final report = FortuneReport(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        createdAt: DateTime.now(),
-        birthDate: _birthDate!,
-        bloodType: _bloodType!,
-        level: FortuneLevel.excellent,
-        poem: '春风得意马蹄疾，一日看尽长安花。',
-        poemInterpretation: '这首诗暗示着你将迎来一个充满机遇和喜悦的时期，事业和生活都会有新的突破。',
-        predictions: [
-          FortunePrediction(
-            type: FortuneType.career,
-            description: '职场上将遇到贵人相助，有望获得晋升或加薪的机会。',
-            score: 90,
-            suggestions: ['主动承担重要项目，展现自己的能力', '与同事保持良好的沟通和合作关系', '注意职业发展方向的规划'],
+      try {
+        // 显示加载指示器
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/cat_divination.gif',
+                    height: 120,
+                    width: 120,
+                    errorBuilder: (context, error, stackTrace) => const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '喵仙人正在为你解读命理...',
+                    style: AppTheme.bodyStyle.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          FortunePrediction(
-            type: FortuneType.love,
-            description: '感情运势稳定，单身者可能遇到心仪的对象。',
-            score: 85,
-            suggestions: ['多参加社交活动，扩大交友圈', '保持开放和真诚的态度', '适时表达自己的感受'],
-          ),
-        ],
-        luckySuggestions: ['早起晨练，增强体质', '多与朋友聚会，增进感情', '学习新技能，提升自我'],
-        luckyItems: ['红色钱包', '猫咪挂饰', '幸运手链'],
-        luckyColors: ['红色', '粉色', '金色'],
-        luckyNumbers: [3, 6, 8],
-      );
+        );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FortuneReportPage(report: report),
-        ),
-      );
+        // 生成命理报告
+        final report = await FortuneService.generateReport(
+          _birthDate!,
+          _bloodType!,
+        );
+
+        // 确保在弹出对话框前检查上下文是否有效
+        if (!mounted) return;
+        
+        // 关闭加载指示器
+        Navigator.of(context).pop();
+
+        // 确保app没有被销毁后再导航
+        if (mounted) {
+          // 导航到报告页面
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => FortuneTellingReportPage(report: report),
+            ),
+          );
+        }
+      } catch (e) {
+        // 确保上下文有效
+        if (!mounted) return;
+        
+        // 关闭加载指示器
+        Navigator.of(context).pop();
+
+        // 显示错误提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('生成报告时出错：${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -239,7 +283,7 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '让喵星人为你解读命运的密码',
+                          '让喵仙人为你解读命运的密码',
                           style: AppTheme.bodyStyle.copyWith(
                             color: Colors.black54,
                             fontSize: 14,
@@ -329,7 +373,7 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
                   if (_birthDate != null && _bloodType != null)
                     Center(
                       child: Text(
-                        '喵星人正在聚集能量...',
+                        '喵仙人正在聚集能量...',
                         style: AppTheme.bodyStyle.copyWith(
                           color: Colors.black54,
                           fontSize: 14,

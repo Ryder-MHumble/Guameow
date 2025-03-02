@@ -717,6 +717,18 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           description: "财运不错",
           suggestions: data.goodThings,
         ),
+        FortunePrediction(
+          type: FortuneType.health,
+          score: 85,
+          description: "身体状况良好，精力充沛",
+          suggestions: data.goodThings,
+        ),
+        FortunePrediction(
+          type: FortuneType.study,
+          score: 88,
+          description: "学习效率高，思维活跃",
+          suggestions: data.goodThings,
+        ),
       ],
       birthDate: DateTime.now(),
       bloodType: "A",

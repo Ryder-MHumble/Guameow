@@ -16,93 +16,60 @@ class CustomDatePicker extends StatefulWidget {
 }
 
 class _CustomDatePickerState extends State<CustomDatePicker> {
-  late PageController _monthController;
   late DateTime _selectedDate;
-  late DateTime _currentMonth;
+  late int _selectedYear;
+  late int _selectedMonth;
+  late int _selectedDay;
+  final int _currentYear = DateTime.now().year;
+  final int _startYear = DateTime.now().year - 100; // 从100年前开始
+  
+  late FixedExtentScrollController _yearController;
+  late FixedExtentScrollController _monthController;
+  late FixedExtentScrollController _dayController;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
-    _currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
-    _monthController = PageController(initialPage: 0);
+    _selectedYear = _selectedDate.year;
+    _selectedMonth = _selectedDate.month;
+    _selectedDay = _selectedDate.day;
+    
+    // 初始化控制器，设置初始位置
+    _yearController = FixedExtentScrollController(initialItem: _selectedYear - _startYear);
+    _monthController = FixedExtentScrollController(initialItem: _selectedMonth - 1);
+    _dayController = FixedExtentScrollController(initialItem: _selectedDay - 1);
   }
 
   @override
   void dispose() {
+    _yearController.dispose();
     _monthController.dispose();
+    _dayController.dispose();
     super.dispose();
   }
 
-  List<Widget> _buildCalendarDays() {
-    final List<Widget> days = [];
-    final daysInMonth =
-        DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    final firstDayOfMonth = DateTime(
-      _currentMonth.year,
-      _currentMonth.month,
-      1,
-    );
-    final firstWeekday = firstDayOfMonth.weekday;
-
-    // Add empty spaces for days before the first day of month
-    for (int i = 1; i < firstWeekday; i++) {
-      days.add(const SizedBox());
+  void _updateSelectedDate() {
+    // 检查日期是否有效，无效日期时做调整
+    int daysInMonth = DateTime(_selectedYear, _selectedMonth + 1, 0).day;
+    int validDay = _selectedDay > daysInMonth ? daysInMonth : _selectedDay;
+    
+    final newDate = DateTime(_selectedYear, _selectedMonth, validDay);
+    if (newDate != _selectedDate) {
+      setState(() {
+        _selectedDate = newDate;
+        _selectedDay = validDay;
+      });
+      
+      // 如果日期变化导致日数变化，需要更新日期选择器
+      if (_selectedDay != validDay && _dayController.hasClients) {
+        try {
+          _dayController.jumpToItem(validDay - 1);
+        } catch (e) {
+          // 忽略可能的越界错误
+        }
+      }
     }
-
-    // Add days of month
-    for (int day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(_currentMonth.year, _currentMonth.month, day);
-      final isSelected =
-          date.year == _selectedDate.year &&
-          date.month == _selectedDate.month &&
-          date.day == _selectedDate.day;
-      final isToday =
-          date.year == DateTime.now().year &&
-          date.month == DateTime.now().month &&
-          date.day == DateTime.now().day;
-
-      days.add(
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedDate = date;
-            });
-            widget.onDateSelected(date);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color:
-                  isSelected
-                      ? AppTheme.primary
-                      : (isToday
-                          ? AppTheme.primary.withOpacity(0.1)
-                          : Colors.transparent),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                day.toString(),
-                style: TextStyle(
-                  color:
-                      isSelected
-                          ? Colors.white
-                          : (isToday ? AppTheme.primary : Colors.black87),
-                  fontWeight:
-                      isSelected || isToday
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return days;
   }
 
   @override
@@ -112,7 +79,13 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.smallRadius),
-        boxShadow: [AppTheme.softShadow],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -120,55 +93,246 @@ class _CustomDatePickerState extends State<CustomDatePicker> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: () {
-                  setState(() {
-                    _currentMonth = DateTime(
-                      _currentMonth.year,
-                      _currentMonth.month - 1,
-                    );
-                  });
-                },
-              ),
               Text(
-                '${_currentMonth.year}年${_currentMonth.month}月',
+                '选择日期',
                 style: AppTheme.titleStyle.copyWith(fontSize: 16),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: () {
-                  setState(() {
-                    _currentMonth = DateTime(
-                      _currentMonth.year,
-                      _currentMonth.month + 1,
-                    );
-                  });
-                },
+              Text(
+                '${_selectedYear}年${_selectedMonth}月${_selectedDay}日',
+                style: AppTheme.bodyStyle.copyWith(
+                  color: AppTheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children:
-                const ['日', '一', '二', '三', '四', '五', '六']
-                    .map(
-                      (day) => Text(
-                        day,
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
+          SizedBox(
+            height: 200,
+            child: Row(
+              children: [
+                // 年份选择器
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(AppTheme.smallRadius),
+                    ),
+                    child: Stack(
+                      children: [
+                        ListWheelScrollView.useDelegate(
+                          controller: _yearController,
+                          itemExtent: 50,
+                          perspective: 0.005,
+                          diameterRatio: 1.5,
+                          physics: const FixedExtentScrollPhysics(),
+                          onSelectedItemChanged: (index) {
+                            setState(() {
+                              _selectedYear = _startYear + index;
+                              _updateSelectedDate();
+                            });
+                          },
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: _currentYear - _startYear + 1,
+                            builder: (context, index) {
+                              final year = _startYear + index;
+                              final isSelected = year == _selectedYear;
+                              return Center(
+                                child: Text(
+                                  '$year年',
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 18 : 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected ? AppTheme.primary : Colors.black87,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
+                        // 中间指示器
+                        Center(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                                bottom: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 月份选择器
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(AppTheme.smallRadius),
+                    ),
+                    child: Stack(
+                      children: [
+                        ListWheelScrollView.useDelegate(
+                          controller: _monthController,
+                          itemExtent: 50,
+                          perspective: 0.005,
+                          diameterRatio: 1.5,
+                          physics: const FixedExtentScrollPhysics(),
+                          onSelectedItemChanged: (index) {
+                            setState(() {
+                              _selectedMonth = index + 1;
+                              _updateSelectedDate();
+                            });
+                          },
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: 12,
+                            builder: (context, index) {
+                              final month = index + 1;
+                              final isSelected = month == _selectedMonth;
+                              return Center(
+                                child: Text(
+                                  '$month月',
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 18 : 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected ? AppTheme.primary : Colors.black87,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        // 中间指示器
+                        Center(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                                bottom: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 日期选择器
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(AppTheme.smallRadius),
+                    ),
+                    child: Stack(
+                      children: [
+                        ListWheelScrollView.useDelegate(
+                          controller: _dayController,
+                          itemExtent: 50,
+                          perspective: 0.005,
+                          diameterRatio: 1.5,
+                          physics: const FixedExtentScrollPhysics(),
+                          onSelectedItemChanged: (index) {
+                            setState(() {
+                              _selectedDay = index + 1;
+                              _updateSelectedDate();
+                            });
+                          },
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount: DateTime(_selectedYear, _selectedMonth + 1, 0).day,
+                            builder: (context, index) {
+                              final day = index + 1;
+                              final isSelected = day == _selectedDay;
+                              return Center(
+                                child: Text(
+                                  '$day日',
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 18 : 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isSelected ? AppTheme.primary : Colors.black87,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        // 中间指示器
+                        Center(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                                bottom: BorderSide(
+                                  color: AppTheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 7,
-            children: _buildCalendarDays(),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  '取消',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () {
+                  widget.onDateSelected(_selectedDate);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.smallRadius),
+                  ),
+                ),
+                child: const Text('确定'),
+              ),
+            ],
           ),
         ],
       ),
