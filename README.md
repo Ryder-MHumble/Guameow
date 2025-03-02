@@ -50,20 +50,7 @@ flutter run
 - flutter_vector_icons: ^2.0.0 - 矢量图标
 - animated_text_kit: ^4.2.2 - 文字动画效果
 - google_fonts: ^6.1.0 - Google字体支持
-
-## 🤝 贡献指南
-
-欢迎提交问题和功能请求！如果您想贡献代码：
-
-1. Fork 本仓库
-2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开一个 Pull Request
-
-## 📝 开源协议
-
-本项目基于 MIT 协议开源 - 查看 [LICENSE](LICENSE) 文件了解更多细节
+- 
 
 ## 👥 关于作者
 
