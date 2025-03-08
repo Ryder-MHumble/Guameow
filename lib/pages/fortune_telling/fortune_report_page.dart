@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/fortune_report.dart';
 import '../../modules/style/app_theme.dart';
+import '../../data/fortune_static_data.dart';
 
 class FortuneReportPage extends StatefulWidget {
   final FortuneReport report;
@@ -52,48 +53,15 @@ class _FortuneReportPageState extends State<FortuneReportPage>
   }
 
   Color _getLevelColor(FortuneLevel level) {
-    switch (level) {
-      case FortuneLevel.excellent:
-        return const Color(0xFFFF69B4); // 上上签 - 粉色
-      case FortuneLevel.great:
-        return const Color(0xFFFF8C00); // 上吉签 - 橙色
-      case FortuneLevel.good:
-        return const Color(0xFF4169E1); // 中吉签 - 蓝色
-      case FortuneLevel.fair:
-        return const Color(0xFF98FB98); // 小吉签 - 绿色
-      case FortuneLevel.bad:
-        return const Color(0xFF808080); // 凶签 - 灰色
-    }
+    return FortuneStaticData.getLevelColor(level);
   }
 
   Color _getTypeColor(FortuneType type) {
-    switch (type) {
-      case FortuneType.love:
-        return const Color(0xFFFF97C1);
-      case FortuneType.career:
-        return const Color(0xFF7EC2FF);
-      case FortuneType.wealth:
-        return const Color(0xFFFFB366);
-      case FortuneType.health:
-        return const Color(0xFF90EE90);
-      case FortuneType.study:
-        return const Color(0xFFA78BFA); // 学业运势 - 紫色
-    }
+    return FortuneStaticData.getTypeColor(type);
   }
 
   String _getFortuneTypeIcon(FortuneType type) {
-    switch (type) {
-      case FortuneType.love:
-        return 'assets/icons/love.svg';
-      case FortuneType.career:
-        return 'assets/icons/career.svg';
-      case FortuneType.wealth:
-        return 'assets/icons/wealth.svg';
-      case FortuneType.health:
-        return 'assets/icons/health.svg';
-      case FortuneType.study:
-        return 'assets/icons/study.svg'; // 如果没有可以使用备用图标
-    }
+    return FortuneStaticData.getFortuneTypeIcon(type);
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {

@@ -7,6 +7,7 @@ import 'models/fortune_data.dart';
 import 'data/test_fortune_data.dart';
 import '../fortune_telling/fortune_report_page.dart';
 import '../../models/fortune_report.dart';
+import '../../data/fortune_static_data.dart';
 
 class DailyFortunePage extends StatefulWidget {
   const DailyFortunePage({super.key});
@@ -22,54 +23,8 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   bool _isShaking = false;
   final List<_SakuraParticle> _sakuraParticles = [];
 
-  // 运势样式映射
-  final Map<String, Map<String, dynamic>> _fortuneStyles = {
-    '上上签': {
-      'color': const Color(0xFFFF69B4),
-      'borderColor': const Color(0xFFFF69B4),
-      'tagColor': const Color(0xFFFFF0F5),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFFFF69B4), Color(0xFFFFB6C1)],
-      ),
-      'icon': '🌸',
-    },
-    '上吉签': {
-      'color': const Color(0xFFFF8C00),
-      'borderColor': const Color(0xFFFF8C00),
-      'tagColor': const Color(0xFFFFEFD5),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFFFF8C00), Color(0xFFFFD700)],
-      ),
-      'icon': '✨',
-    },
-    '中吉签': {
-      'color': const Color(0xFF4169E1),
-      'borderColor': const Color(0xFF4169E1),
-      'tagColor': const Color(0xFFF0F8FF),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFF4169E1), Color(0xFF87CEEB)],
-      ),
-      'icon': '🌟',
-    },
-    '小吉签': {
-      'color': const Color(0xFF32CD32),
-      'borderColor': const Color(0xFF32CD32),
-      'tagColor': const Color(0xFFF0FFF0),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFF32CD32), Color(0xFF98FB98)],
-      ),
-      'icon': '🍀',
-    },
-    '凶签': {
-      'color': const Color(0xFF800080),
-      'borderColor': const Color(0xFF800080),
-      'tagColor': const Color(0xFFF5F0F5),
-      'gradient': const LinearGradient(
-        colors: [Color(0xFF800080), Color(0xFFBA55D3)],
-      ),
-      'icon': '🌙',
-    },
-  };
+  // 使用静态数据文件中的运势样式映射
+  final Map<String, Map<String, dynamic>> _fortuneStyles = FortuneStaticData.fortuneStyles;
 
   @override
   void initState() {
@@ -157,7 +112,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           MaterialPageRoute(
             builder:
                 (context) => FortuneReportPage(
-                  report: _convertToFortuneReport(_currentFortune!),
+                  report: FortuneStaticData.convertToFortuneReport(_currentFortune!),
                 ),
           ),
         );
@@ -550,18 +505,19 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   }
 
   Widget _buildFortuneRatioCard() {
+    // 获取当前运势的样式
+    final currentStyle = _currentFortune != null 
+        ? _fortuneStyles[_currentFortune!.fortuneLevel]!
+        : _fortuneStyles['上上签']!;
+
+    // 根据当前运势设置不同的概率分布
+    Map<String, String> ratios = FortuneStaticData.getRatiosByFortuneLevel(_currentFortune?.fortuneLevel ?? '上上签');
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primary.withOpacity(0.8),
-            AppTheme.secondary.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: currentStyle['gradient'] as LinearGradient,
         borderRadius: BorderRadius.circular(AppTheme.mediumRadius),
         boxShadow: [AppTheme.softShadow],
       ),
@@ -579,10 +535,10 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildRatioItem('大吉', '30%'),
-              _buildRatioItem('中吉', '45%'),
-              _buildRatioItem('小吉', '20%'),
-              _buildRatioItem('凶', '5%'),
+              _buildRatioItem('大吉', ratios['大吉']!, currentStyle),
+              _buildRatioItem('中吉', ratios['中吉']!, currentStyle),
+              _buildRatioItem('小吉', ratios['小吉']!, currentStyle),
+              _buildRatioItem('凶', ratios['凶']!, currentStyle),
             ],
           ),
         ],
@@ -590,7 +546,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     );
   }
 
-  Widget _buildRatioItem(String label, String percentage) {
+  Widget _buildRatioItem(String label, String percentage, Map<String, dynamic> style) {
     return Column(
       children: [
         Text(
@@ -598,12 +554,16 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           style: AppTheme.titleStyle.copyWith(
             color: Colors.white,
             fontSize: 24,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTheme.bodyStyle.copyWith(color: Colors.white, fontSize: 14),
+          style: AppTheme.bodyStyle.copyWith(
+            color: Colors.white.withOpacity(0.9),
+            fontSize: 14,
+          ),
         ),
       ],
     );
@@ -687,56 +647,9 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     );
   }
 
-  // 将 FortuneData 转换为 FortuneReport
+  // 将 FortuneData 转换为 FortuneReport - 使用静态数据文件中的方法
   FortuneReport _convertToFortuneReport(FortuneData data) {
-    return FortuneReport(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      createdAt: DateTime.now(),
-      level: FortuneLevel.values.firstWhere(
-        (e) => e.label == data.fortuneLevel,
-        orElse: () => FortuneLevel.good,
-      ),
-      poem: data.poem,
-      poemInterpretation: data.tips,
-      predictions: [
-        FortunePrediction(
-          type: FortuneType.love,
-          score: 95,
-          description: "今日桃花运旺盛",
-          suggestions: data.goodThings,
-        ),
-        FortunePrediction(
-          type: FortuneType.career,
-          score: 88,
-          description: "工作进展顺利",
-          suggestions: data.goodThings,
-        ),
-        FortunePrediction(
-          type: FortuneType.wealth,
-          score: 90,
-          description: "财运不错",
-          suggestions: data.goodThings,
-        ),
-        FortunePrediction(
-          type: FortuneType.health,
-          score: 85,
-          description: "身体状况良好，精力充沛",
-          suggestions: data.goodThings,
-        ),
-        FortunePrediction(
-          type: FortuneType.study,
-          score: 88,
-          description: "学习效率高，思维活跃",
-          suggestions: data.goodThings,
-        ),
-      ],
-      birthDate: DateTime.now(),
-      bloodType: "A",
-      luckySuggestions: data.goodThings,
-      luckyColors: ["粉色", "白色"],
-      luckyNumbers: [6, 8, 9],
-      luckyItems: data.tags,
-    );
+    return FortuneStaticData.convertToFortuneReport(data);
   }
 }
 
