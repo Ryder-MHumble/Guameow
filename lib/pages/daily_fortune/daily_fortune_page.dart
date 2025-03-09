@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import '../../modules/style/app_theme.dart';
-import 'dart:math' show Random, sin, pi;
+import 'dart:math' as math show Random, sin, pi;
 import 'widgets/fortune_barrel.dart';
 import 'models/fortune_data.dart';
-import 'data/test_fortune_data.dart';
 import '../fortune_telling/fortune_report_page.dart';
 import '../../models/fortune_report.dart';
-import '../../data/fortune_static_data.dart';
+import '../../data/daily_fortune_static_data.dart';
 import 'dart:async';
 
 // 导入平台检测
@@ -32,8 +31,24 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   bool _isShaking = false;
   final List<_SakuraParticle> _sakuraParticles = [];
 
+  // 新增: 摇签阶段控制
+  int _shakeStage = 0;
+  bool _isLoading = false;
+  String _feedbackText = '';
+  List<String> _shakeFeedbackTexts = [
+    '喵咪咒语生效中...',
+    '喵咪正在占卜未来...',
+    '运势即将揭晓...',
+    '快有结果啦！'
+  ];
+  
+  // 新增: 延长摇签动画时间控制
+  Timer? _stageTimer;
+  final int _stagesCount = 4;
+  final int _stageDuration = 700; // 毫秒
+
   // 使用静态数据文件中的运势样式映射
-  final Map<String, Map<String, dynamic>> _fortuneStyles = FortuneStaticData.fortuneStyles;
+  final Map<String, Map<String, dynamic>> _fortuneStyles = DailyFortuneStaticData.fortuneStyles;
   
   // 摇晃检测相关变量
   StreamSubscription<dynamic>? _accelerometerSubscription;
@@ -283,6 +298,8 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     _accelerometerSubscription?.cancel();
     // 取消定时器
     _shakeResetTimer?.cancel();
+    // 新增: 取消阶段定时器
+    _stageTimer?.cancel();
     super.dispose();
   }
 
@@ -291,19 +308,64 @@ class _DailyFortunePageState extends State<DailyFortunePage>
 
     setState(() {
       _isShaking = true;
+      _isLoading = true;
+      _shakeStage = 0;
+      _feedbackText = _shakeFeedbackTexts[0];
       _sakuraParticles.clear();
     });
 
-    _shakeController.forward(from: 0).then((_) {
-      setState(() {
-        _isShaking = false;
-        // 随机选择一个新的运势
-        _currentFortune =
-            TestFortuneData.testFortunes[Random().nextInt(
-              TestFortuneData.testFortunes.length,
-            )];
-        _addSakuraParticles();
-      });
+    // 启动摇晃动画
+    _shakeController.repeat(reverse: true);
+    
+    // 开始阶段性动画
+    _progressShakeStages();
+  }
+  
+  // 新增: 处理摇签的阶段性进展
+  void _progressShakeStages() {
+    _stageTimer?.cancel();
+    
+    // 创建定时器处理各阶段
+    _stageTimer = Timer.periodic(Duration(milliseconds: _stageDuration), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      if (_shakeStage < _stagesCount - 1) {
+        setState(() {
+          _shakeStage++;
+          _feedbackText = _shakeFeedbackTexts[_shakeStage < _shakeFeedbackTexts.length 
+              ? _shakeStage 
+              : _shakeFeedbackTexts.length - 1];
+        });
+      } else {
+        // 最后阶段完成后，停止摇晃动画并显示结果
+        timer.cancel();
+        _finishShakeAnimation();
+      }
+    });
+  }
+  
+  // 新增: 结束摇晃动画并显示结果
+  void _finishShakeAnimation() {
+    // 停止摇晃动画
+    _shakeController.stop();
+    _shakeController.reset();
+    
+    // 随机选择一个新的运势
+    // 创建一个独立的Random实例，避免在快速连续调用时返回相同的值
+    final random = math.Random(DateTime.now().millisecondsSinceEpoch);
+    final randomFortune = DailyFortuneStaticData.testFortunes[
+      random.nextInt(DailyFortuneStaticData.testFortunes.length)
+    ];
+    
+    // 添加结果特效和过渡动画
+    setState(() {
+      _isShaking = false;
+      _isLoading = false;
+      _currentFortune = randomFortune;
+      _addSakuraParticles();
     });
   }
 
@@ -311,10 +373,10 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     for (int i = 0; i < 10; i++) {
       _sakuraParticles.add(
         _SakuraParticle(
-          x: Random().nextDouble() * MediaQuery.of(context).size.width,
+          x: math.Random().nextDouble() * MediaQuery.of(context).size.width,
           y: -50,
-          size: 20 + Random().nextDouble() * 20,
-          velocity: 2 + Random().nextDouble() * 2,
+          size: 20 + math.Random().nextDouble() * 20,
+          velocity: 2 + math.Random().nextDouble() * 2,
         ),
       );
     }
@@ -327,7 +389,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     setState(() {
       for (var particle in _sakuraParticles) {
         particle.y += particle.velocity;
-        particle.x += sin(particle.y / 50) * 2;
+        particle.x += math.sin(particle.y / 50) * 2;
       }
 
       _sakuraParticles.removeWhere((particle) {
@@ -347,6 +409,14 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     final fortuneLevel = _currentFortune!.fortuneLevel;
     final style = _fortuneStyles[fortuneLevel] ?? _fortuneStyles['上上签']!;
 
+    // 新增：动画控制变量
+    final bool animationsComplete = true;
+    final bool showHeader = animationsComplete;
+    final bool showPoem = animationsComplete;
+    final bool showGuide = animationsComplete;
+    final bool showTips = animationsComplete;
+    final bool showTags = animationsComplete;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -354,7 +424,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           MaterialPageRoute(
             builder:
                 (context) => FortuneReportPage(
-                  report: FortuneStaticData.convertToFortuneReport(_currentFortune!),
+                  report: DailyFortuneStaticData.convertToFortuneReport(_currentFortune!),
                 ),
           ),
         );
@@ -419,325 +489,440 @@ class _DailyFortunePageState extends State<DailyFortunePage>
             ),
 
             // 签文内容
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 左侧签筒图标
-                  Column(
-                    children: [
-                      Container(
-                        width: 60,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: style['tagColor'],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: style['borderColor'].withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.card_giftcard,
-                              size: 32,
-                              color: style['color'],
+            _AnimatedCardSection(
+              delayMs: 200,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 左侧签筒图标
+                    Column(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: style['tagColor'],
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: style['borderColor'].withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: style['borderColor'].withOpacity(0.3),
+                              width: 1,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '第${_currentFortune!.fortuneNumber}签',
-                              style: TextStyle(
-                                fontSize: 12,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.card_giftcard,
+                                size: 32,
                                 color: style['color'],
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '第${_currentFortune!.fortuneNumber}签',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: style['color'],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: style['tagColor'],
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: style['borderColor'].withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: style['borderColor'].withOpacity(0.3),
+                              width: 1,
                             ),
-                          ],
+                          ),
+                          child: Text(
+                            _currentFortune!.fortuneLevel,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: style['color'],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+
+                    // 右侧签文
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: style['tagColor'],
                           borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: style['borderColor'].withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                           border: Border.all(
                             color: style['borderColor'].withOpacity(0.3),
                             width: 1,
                           ),
                         ),
                         child: Text(
-                          _currentFortune!.fortuneLevel,
+                          _currentFortune!.poem,
                           style: TextStyle(
-                            fontSize: 14,
-                            color: style['color'],
-                            fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                            height: 1.8,
+                            color: Colors.black.withOpacity(0.85),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(width: 20),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                  // 右侧签文
-                  Expanded(
-                    child: Container(
+            // 运势指南
+            _AnimatedCardSection(
+              delayMs: 500,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: style['tagColor'],
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: style['borderColor'].withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                         border: Border.all(
                           color: style['borderColor'].withOpacity(0.3),
                           width: 1,
                         ),
                       ),
-                      child: Text(
-                        _currentFortune!.poem,
-                        style: TextStyle(
-                          fontSize: 18,
-                          height: 1.8,
-                          color: Colors.black.withOpacity(0.85),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // 运势指南
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.compass_calibration, color: style['color']),
-                      const SizedBox(width: 8),
-                      Text(
-                        '运势指南',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black.withOpacity(0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: style['tagColor'],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: style['borderColor'].withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 宜
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle_outline,
-                                    color: Colors.green[400],
-                                    size: 20,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 宜
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '宜',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.green[700],
-                                      fontWeight: FontWeight.w500,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[50],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.green[200]!,
+                                      width: 1,
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              ...(_currentFortune!.goodThings.map(
-                                (thing) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    thing,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black.withOpacity(0.85),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle_outline,
+                                        color: Colors.green[600],
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '宜',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.green[700],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              )),
-                            ],
+                                const SizedBox(height: 12),
+                                ...(_currentFortune!.goodThings.map(
+                                  (thing) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 6, right: 8),
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.green[400],
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            thing,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              height: 1.4,
+                                              color: Colors.black.withOpacity(0.85),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
                           ),
-                        ),
-                        Container(
-                          height: 80,
-                          width: 1,
-                          color: style['borderColor'].withOpacity(0.3),
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                        // 忌
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_outlined,
-                                    color: Colors.orange[400],
-                                    size: 20,
+                          Container(
+                            height: 80,
+                            width: 1,
+                            color: style['borderColor'].withOpacity(0.3),
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                          // 忌
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '忌',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.orange[700],
-                                      fontWeight: FontWeight.w500,
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange[50],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.orange[200]!,
+                                      width: 1,
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              ...(_currentFortune!.badThings.map(
-                                (thing) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    thing,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black.withOpacity(0.85),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.warning_amber_outlined,
+                                        color: Colors.orange[600],
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '忌',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.orange[700],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              )),
-                            ],
+                                const SizedBox(height: 12),
+                                ...(_currentFortune!.badThings.map(
+                                  (thing) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 6, right: 8),
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange[400],
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            thing,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              height: 1.4,
+                                              color: Colors.black.withOpacity(0.85),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
             // 解签小贴士
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: style['tagColor'],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: style['borderColor'].withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline, color: style['color']),
-                      const SizedBox(width: 8),
-                      Text(
-                        '解签小贴士',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black.withOpacity(0.85),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _currentFortune!.tips,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.6,
-                      color: Colors.black.withOpacity(0.85),
+            _AnimatedCardSection(
+              delayMs: 800,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: style['tagColor'],
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: style['borderColor'].withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
+                  ],
+                  border: Border.all(
+                    color: style['borderColor'].withOpacity(0.3),
+                    width: 1,
                   ),
-                ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: style['color'].withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.lightbulb_outline, color: style['color']),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '解签小贴士',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black.withOpacity(0.85),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _currentFortune!.tips,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.6,
+                        color: Colors.black.withOpacity(0.85),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 16),
 
             // 标签
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children:
-                    _currentFortune!.tags
-                        .map(
-                          (tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: style['tagColor'],
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: style['borderColor'].withOpacity(0.3),
-                                width: 1,
+            _AnimatedCardSection(
+              delayMs: 1000,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      _currentFortune!.tags
+                          .map(
+                            (tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: style['tagColor'],
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: style['borderColor'].withOpacity(0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                                border: Border.all(
+                                  color: style['borderColor'].withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: style['color'],
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: style['color'],
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                          )
+                          .toList(),
+                ),
               ),
             ),
 
             const SizedBox(height: 16),
 
             // 添加点击提示
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.touch_app,
-                    size: 16,
-                    color: style['color'].withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '点击查看详细解签',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: style['color'].withOpacity(0.6),
+            _AnimatedCardSection(
+              delayMs: 1200,
+              offsetDirection: const Offset(0, 0.3),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.touch_app,
+                      size: 16,
+                      color: style['color'].withOpacity(0.7),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '点击查看详细解签',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: style['color'].withOpacity(0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -753,7 +938,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
         : _fortuneStyles['上上签']!;
 
     // 根据当前运势设置不同的概率分布
-    Map<String, String> ratios = FortuneStaticData.getRatiosByFortuneLevel(_currentFortune?.fortuneLevel ?? '上上签');
+    Map<String, String> ratios = DailyFortuneStaticData.getRatiosByFortuneLevel(_currentFortune?.fortuneLevel ?? '上上签');
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -876,6 +1061,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           totalRepeatCount: 1,
         ),
         const SizedBox(height: 50),
+        
         // 添加摇晃反馈效果
         TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: _isDeviceShaking ? 5.0 : 0),
@@ -883,7 +1069,7 @@ class _DailyFortunePageState extends State<DailyFortunePage>
           builder: (context, value, child) {
             return Transform.translate(
               offset: Offset(
-                sin(value * 2) * 3,
+                math.sin(value * 2) * 3,
                 0,
               ),
               child: child,
@@ -898,37 +1084,123 @@ class _DailyFortunePageState extends State<DailyFortunePage>
             ),
           ),
         ),
+        
         const SizedBox(height: 30),
+        
+        // 更新反馈文本区域
         AnimatedOpacity(
-          opacity: _isShaking ? 0.0 : 1.0,
+          opacity: _isShaking ? 1.0 : (_isLoading ? 0.0 : 1.0),
           duration: const Duration(milliseconds: 200),
-          child: Column(
-            children: [
-              Text(
-                '轻触签筒开启今日喵签',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
-              // 只有在摇晃检测可用时才显示摇晃提示
-              if (_isShakeDetectionAvailable) ...[
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          child: _isShaking 
+              ? _buildShakingFeedback()
+              : Column(
                   children: [
-                    Icon(
-                      Icons.vibration,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
                     Text(
-                      '或摇晃手机抽取喵签',
+                      '轻触签筒开启今日喵签',
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
+                    // 只有在摇晃检测可用时才显示摇晃提示
+                    if (_isShakeDetectionAvailable) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.vibration,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '或摇晃手机抽取喵签',
+                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ],
+        ),
+      ],
+    );
+  }
+  
+  // 新增: 构建摇晃反馈UI
+  Widget _buildShakingFeedback() {
+    return Column(
+      children: [
+        // 阶段性进度指示器
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_stagesCount, (index) {
+            return Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: index <= _shakeStage 
+                    ? const Color(0xFFFF69B4) 
+                    : const Color(0xFFFF69B4).withOpacity(0.3),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 12),
+        
+        // 动态反馈文本
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.0, 0.5),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: Text(
+            _feedbackText,
+            key: ValueKey<String>(_feedbackText),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFFFF69B4),
+            ),
           ),
+        ),
+        
+        // 猫咪动画指示符
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            for (int i = 0; i < 3; i++)
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFF69B4),
+                ),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: Duration(milliseconds: 600),
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: math.sin((value * math.pi) + (i * 0.5)).abs(),
+                      child: child,
+                    );
+                  },
+                  child: Container(),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -1004,7 +1276,86 @@ class _DailyFortunePageState extends State<DailyFortunePage>
 
   // 将 FortuneData 转换为 FortuneReport - 使用静态数据文件中的方法
   FortuneReport _convertToFortuneReport(FortuneData data) {
-    return FortuneStaticData.convertToFortuneReport(data);
+    return DailyFortuneStaticData.convertToFortuneReport(data);
+  }
+}
+
+// 移动到顶层：动画卡片部分组件
+class _AnimatedCardSection extends StatefulWidget {
+  final Widget child;
+  final int delayMs;
+  final Offset offsetDirection;
+  
+  const _AnimatedCardSection({
+    required this.child, 
+    required this.delayMs,
+    this.offsetDirection = const Offset(0, 0.2),
+  });
+  
+  @override
+  State<_AnimatedCardSection> createState() => _AnimatedCardSectionState();
+}
+
+class _AnimatedCardSectionState extends State<_AnimatedCardSection> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacityAnimation;
+  late Animation<Offset> _slideAnimation;
+  bool _isVisible = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _slideAnimation = Tween<Offset>(
+      begin: widget.offsetDirection,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    // 延迟显示
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) {
+        setState(() => _isVisible = true);
+        _controller.forward();
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacityAnimation.value,
+          child: FractionalTranslation(
+            translation: _slideAnimation.value,
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
   }
 }
 

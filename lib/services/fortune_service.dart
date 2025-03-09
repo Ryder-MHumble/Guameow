@@ -1,8 +1,8 @@
-import 'dart:math';
+import 'dart:math' as math;
 import '../models/fortune_report.dart';
 
 class FortuneService {
-  static final Random _random = Random();
+  static final math.Random _random = math.Random();
   
   static const List<String> _poems = [
     '一叶浮萍归大海，人生何处不相逢。',

@@ -32,21 +32,46 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
 
   void _setupAnimations() {
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1200), // 增加动画时长
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    // 优化渐入动画
+    _fadeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 0.3)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 20.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.3, end: 0.7)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 50.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.7, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30.0,
+      ),
+    ]).animate(_controller);
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    // 优化滑入动画
+    _slideAnimation = TweenSequence<Offset>([
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: const Offset(0, 0.3),
+          end: const Offset(0, 0.15),
+        ).chain(CurveTween(curve: Curves.easeOutExpo)),
+        weight: 40.0,
+      ),
+      TweenSequenceItem(
+        tween: Tween<Offset>(
+          begin: const Offset(0, 0.15),
+          end: Offset.zero,
+        ).chain(CurveTween(curve: Curves.easeOutCirc)),
+        weight: 60.0,
+      ),
+    ]).animate(_controller);
 
     _controller.forward();
   }
@@ -224,26 +249,105 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
     return hours[hourIndex];
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionContainer({
+    required Widget child,
+    double elevation = 4,
+    Color? backgroundColor,
+    EdgeInsets? margin,
+    bool addInnerShadow = false,
+  }) {
+    return Container(
+      margin: margin ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: backgroundColor ?? Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.primary.withOpacity(0.08),
+              blurRadius: elevation,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+            if (addInnerShadow)
+              BoxShadow(
+                color: Colors.white.withOpacity(0.5),
+                blurRadius: 0,
+                offset: const Offset(0, 2),
+                spreadRadius: -1,
+              ),
+          ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: addInnerShadow
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.15),
+                      Colors.white.withOpacity(0.05),
+                    ],
+                  ),
+                )
+              : null,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, {IconData? icon}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           Container(
             width: 4,
-            height: 20,
+            height: 24,
             decoration: BoxDecoration(
-              color: AppTheme.primary,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.primary,
+                  AppTheme.primary.withOpacity(0.7),
+                ],
+              ),
               borderRadius: BorderRadius.circular(2),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primary.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
+          if (icon != null) ...[
+            Icon(
+              icon,
+              color: AppTheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+          ],
           Text(
             title,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppTheme.primary,
+              shadows: [
+                Shadow(
+                  color: AppTheme.primary.withOpacity(0.2),
+                  offset: const Offset(0, 1),
+                  blurRadius: 2,
+                ),
+              ],
             ),
           ),
         ],
@@ -252,13 +356,18 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
   }
 
   Widget _buildBasicInfo() {
-    final birthDateStr = '${widget.report.birthDate.year}年${widget.report.birthDate.month}月${widget.report.birthDate.day}日';
-    final chineseZodiac = _calculateChineseZodiac(widget.report.birthDate);
-    final heavenlyStem = _calculateHeavenlyStem(widget.report.birthDate);
-    final earthlyBranch = _calculateEarthlyBranch(widget.report.birthDate);
+    final birthDate = widget.report.birthDate;
+    if (birthDate == null) {
+      return const SizedBox.shrink(); // 如果没有生日信息，不显示这个部分
+    }
+
+    final birthDateStr = '${birthDate.year}年${birthDate.month}月${birthDate.day}日';
+    final chineseZodiac = _calculateChineseZodiac(birthDate);
+    final heavenlyStem = _calculateHeavenlyStem(birthDate);
+    final earthlyBranch = _calculateEarthlyBranch(birthDate);
     final stemElement = _getStemElement(heavenlyStem);
     final branchElement = _getBranchElement(earthlyBranch);
-    final zodiacSign = _getZodiacSign(widget.report.birthDate);
+    final zodiacSign = _getZodiacSign(birthDate);
 
     return Container(
       margin: const EdgeInsets.all(20),
@@ -342,11 +451,16 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
   }
 
   Widget _buildEightCharacters() {
-    final stem = _calculateHeavenlyStem(widget.report.birthDate);
-    final branch = _calculateEarthlyBranch(widget.report.birthDate);
-    final chineseMonth = _getChineseMonth(widget.report.birthDate);
-    final chineseDay = _getChineseDay(widget.report.birthDate);
-    final chineseHour = _getChineseHour(widget.report.birthDate);
+    final birthDate = widget.report.birthDate;
+    if (birthDate == null) {
+      return const SizedBox.shrink(); // 如果没有生日信息，不显示这个部分
+    }
+
+    final stem = _calculateHeavenlyStem(birthDate);
+    final branch = _calculateEarthlyBranch(birthDate);
+    final chineseMonth = _getChineseMonth(birthDate);
+    final chineseDay = _getChineseDay(birthDate);
+    final chineseHour = _getChineseHour(birthDate);
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -375,7 +489,7 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
           ),
           const SizedBox(height: 16),
           Text(
-            '你的出生时间为公历${widget.report.birthDate.year}年${widget.report.birthDate.month}月${widget.report.birthDate.day}日'
+            '你的出生时间为公历${birthDate.year}年${birthDate.month}月${birthDate.day}日'
             '（农历${stem}${branch}年$chineseMonth$chineseDay，$chineseHour），八字为：',
             style: const TextStyle(
               fontSize: 15,
@@ -902,78 +1016,6 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
     return const Color(0xFF722ED1);
   }
 
-  Widget _buildCrossSys() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '跨体系综合解读',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCrossItem(
-            '星座（双鱼座）',
-            '2023年海王星顺行，灵感充沛，适合研究或创作；但需避免过度理想化人际关系。',
-          ),
-          const Divider(height: 24, color: Color(0xFFEEEEEE)),
-          _buildCrossItem(
-            '塔罗牌象征',
-            '现状：抽到"隐者（逆位）"，提示需走出自我封闭，主动社交拓展机会。\n'
-            '建议："权杖八（正位）"，快速行动可突破瓶颈。',
-          ),
-          const Divider(height: 24, color: Color(0xFFEEEEEE)),
-          _buildCrossItem(
-            '推背图卦象',
-            '第37象"火运开时祸蔓延"，对应你命局火旺，需注意2026年前后火土流年，避免冲动决策。',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCrossItem(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.primary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          content,
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.6,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildLuckyAdvice() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -1147,11 +1189,17 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppTheme.primary,
+            shadows: [
+              Shadow(
+                color: AppTheme.primary.withOpacity(0.2),
+                offset: const Offset(0, 1),
+                blurRadius: 2,
+              ),
+            ],
           ),
         ),
         centerTitle: true,
         actions: [
-          // 添加分享按钮
           IconButton(
             icon: Icon(Icons.share_rounded, color: AppTheme.primary),
             onPressed: _showShareOptions,
@@ -1160,7 +1208,6 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
       ),
       body: Stack(
         children: [
-          // 主内容
           FadeTransition(
             opacity: _fadeAnimation,
             child: SlideTransition(
@@ -1171,60 +1218,28 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionTitle('基本信息'),
+                    _buildSectionTitle('基本信息', icon: Icons.person_outline),
                     _buildBasicInfo(),
-                    _buildSectionTitle('八字命理分析'),
+                    _buildSectionTitle('八字命理分析', icon: Icons.auto_awesome),
                     _buildEightCharacters(),
                     _buildUsedGod(),
                     _buildDestinyAnalysis(),
-                    _buildSectionTitle('流年运势'),
+                    _buildSectionTitle('流年运势', icon: Icons.timeline),
                     _buildYearFortune(),
                     _buildFinancePosition(),
-                    
-                    // 添加健康运势
                     _buildHealthFortune(),
-                    
-                    // 添加学业运势
                     _buildStudyFortune(),
-                    
-                    _buildSectionTitle('综合解读'),
-                    _buildCrossSys(),
-                    _buildSectionTitle('开运指南'),
+                    _buildSectionTitle('开运指南', icon: Icons.lightbulb_outline),
                     _buildLuckyAdvice(),
-                    // 添加分享按钮
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.share, color: Colors.white),
-                          label: const Text(
-                            '分享到社交媒体',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppTheme.smallRadius),
-                            ),
-                            elevation: 2,
-                          ),
-                          onPressed: _showShareOptions,
-                        ),
-                      ),
-                    ),
+                    // 添加底部间距
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
             ),
           ),
           
-          // 隐藏的分享卡片，用于生成截图
+          // 隐藏的分享卡片
           Offstage(
             offstage: !_isShareCardVisible,
             child: SingleChildScrollView(
@@ -1237,25 +1252,21 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
               ),
             ),
           ),
-          
-          // 显示加载中指示器
-          if (_isShareCardVisible)
-            const Offstage(
-              offstage: false,
-              child: Center(
-                child: SizedBox(
-                  width: 0, // 宽度为0使其不可见，但仍在布局中
-                  height: 0,
-                ),
-              ),
-            ),
         ],
       ),
-      // 添加底部浮动分享按钮
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.primary,
         onPressed: _showShareOptions,
-        child: const Icon(Icons.share_outlined, color: Colors.white),
+        icon: const Icon(Icons.share_outlined, color: Colors.white),
+        label: const Text(
+          '分享',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevation: 4,
+        heroTag: 'fab_share',
       ),
     );
   }

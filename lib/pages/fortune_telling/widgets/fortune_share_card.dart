@@ -86,9 +86,14 @@ class FortuneShareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final birthDateStr = '${report.birthDate.year}年${report.birthDate.month}月${report.birthDate.day}日';
-    final chineseZodiac = _calculateChineseZodiac(report.birthDate);
-    final zodiacSign = _getZodiacSign(report.birthDate);
+    final birthDate = report.birthDate;
+    if (birthDate == null) {
+      return const SizedBox.shrink(); // 如果没有生日信息，不显示这个部分
+    }
+
+    final birthDateStr = '${birthDate.year}年${birthDate.month}月${birthDate.day}日';
+    final chineseZodiac = _calculateChineseZodiac(birthDate);
+    final zodiacSign = _getZodiacSign(birthDate);
     final levelText = _getFortuneLevelText(report.level);
     final levelColor = _getFortuneLevelColor(report.level);
 
