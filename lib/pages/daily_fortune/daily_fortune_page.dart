@@ -31,6 +31,10 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   bool _isShaking = false;
   final List<_SakuraParticle> _sakuraParticles = [];
 
+  // New: Background animation controller and particles
+  final List<_BackgroundParticle> _bgParticles = [];
+  Timer? _bgAnimationTimer;
+
   // 新增: 摇签阶段控制
   int _shakeStage = 0;
   bool _isLoading = false;
@@ -85,6 +89,9 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     
     // 检查功能可用性并初始化
     _checkFeaturesAvailability();
+    
+    // Initialize background particles
+    _initBackgroundParticles();
   }
   
   // 检查功能可用性并初始化
@@ -300,6 +307,8 @@ class _DailyFortunePageState extends State<DailyFortunePage>
     _shakeResetTimer?.cancel();
     // 新增: 取消阶段定时器
     _stageTimer?.cancel();
+    // Cancel background animation timer
+    _bgAnimationTimer?.cancel();
     super.dispose();
   }
 
@@ -999,135 +1008,348 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(
-                opacity: CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeInOut,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFFFFF6FA),
+              const Color(0xFFFEF0F7),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Background particles - reduce count and opacity for subtlety
+            ..._bgParticles.take(8).map((particle) => Positioned(
+              left: particle.x,
+              top: particle.y,
+              child: _buildBackgroundParticle(particle),
+            )),
+            
+            // Decorative elements - made more subtle
+            Positioned(
+              top: -60,
+              right: -40,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.primary.withOpacity(0.05),
                 ),
-                child: SizeTransition(
-                  sizeFactor: animation,
-                  axisAlignment: -1.0,
-                  child: child,
+              ),
+            ),
+            Positioned(
+              bottom: -70,
+              left: -40,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.primary.withOpacity(0.04),
                 ),
-              );
-            },
-            child:
-                _currentFortune == null
-                    ? _buildShakeInterface()
-                    : SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              _buildFortuneRatioCard(),
-                              _buildFortuneCard(),
-                            ],
+              ),
+            ),
+            
+            // Main content
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOut,
+                  ),
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.05),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child:
+                  _currentFortune == null
+                      ? _buildShakeInterface()
+                      : SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              children: [
+                                _buildFortuneRatioCard(),
+                                _buildFortuneCard(),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-          ),
-          
-          // 摇晃教程覆盖层 - 只在摇晃检测可用时显示
-          if (_showTutorial && _currentFortune == null && _isShakeDetectionAvailable)
-            _buildTutorialOverlay(),
-        ],
+            ),
+            
+            // 摇晃教程覆盖层 - 只在摇晃检测可用时显示
+            if (_showTutorial && _currentFortune == null && _isShakeDetectionAvailable)
+              _buildTutorialOverlay(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildShakeInterface() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        AnimatedTextKit(
-          animatedTexts: [
-            TypewriterAnimatedText(
-              '今日喵签',
-              textAlign: TextAlign.center,
-              textStyle: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFFF69B4),
+    // Reduce bottom padding for a better layout
+    final bottomPadding = MediaQuery.of(context).padding.bottom + 20;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    return SafeArea(
+      bottom: false, // Don't use SafeArea for bottom since we'll handle padding manually
+      child: Stack(
+        children: [
+          // Main content
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Increased top spacing to move content down
+                  SizedBox(height: screenHeight * 0.08),
+                  
+                  // Title section - centered properly
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          "今日喵签",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 8),
+                        Text(
+                          "探索未知，聆听喵语",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Increased spacing between title and barrel
+                  SizedBox(height: screenHeight * 0.08),
+                  
+                  // Fortune barrel with cleaner design - properly centered, removed the 喵签筒 text
+                  // Enlarged barrel for better vertical space utilization
+                  Center(
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0, end: _isDeviceShaking ? 5.0 : 0),
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutQuint,
+                      builder: (context, value, child) {
+                        return Transform.translate(
+                          offset: Offset(
+                            math.sin(value * 2) * 3,
+                            0,
+                          ),
+                          child: child,
+                        );
+                      },
+                      child: GestureDetector(
+                        onTap: () {
+                          if (!_isShaking) _handleShake();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(18), // Increased padding
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primary.withOpacity(0.15),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: FortuneBarrel(
+                            isShaking: _isShaking,
+                            onShake: () {
+                              if (!_isShaking) _handleShake();
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // Dynamic spacing based on screen height
+                  SizedBox(height: screenHeight * 0.06),
+                  
+                  // Improved interaction instructions - highlighting the shake feature
+                  Center(
+                    child: AnimatedOpacity(
+                      opacity: _isShaking ? 1.0 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: _isShaking 
+                          ? _buildShakingFeedback()
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isShakeDetectionAvailable) ...[
+                                  // Shake feature now highlighted first
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppTheme.primary.withOpacity(0.2),
+                                          AppTheme.primary.withOpacity(0.1),
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppTheme.primary.withOpacity(0.1),
+                                          blurRadius: 4,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.7),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.vibration,
+                                            size: 20,
+                                            color: AppTheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '✨ 摇晃手机抽取喵签',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppTheme.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '感受心灵的摇动',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.primary.withOpacity(0.7),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.touch_app,
+                                        size: 16,
+                                        color: AppTheme.primary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '轻触签筒开启今日喵签',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppTheme.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                  
+                  // Flexible spacing that adjusts based on screen size
+                  SizedBox(height: screenHeight * 0.12),
+                ],
               ),
-            ),
-          ],
-          totalRepeatCount: 1,
-        ),
-        const SizedBox(height: 50),
-        
-        // 添加摇晃反馈效果
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: _isDeviceShaking ? 5.0 : 0),
-          duration: const Duration(milliseconds: 200),
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(
-                math.sin(value * 2) * 3,
-                0,
-              ),
-              child: child,
-            );
-          },
-          child: Center(
-            child: FortuneBarrel(
-              isShaking: _isShaking,
-              onShake: () {
-                if (!_isShaking) _handleShake();
-              },
             ),
           ),
-        ),
-        
-        const SizedBox(height: 30),
-        
-        // 更新反馈文本区域
-        AnimatedOpacity(
-          opacity: _isShaking ? 1.0 : (_isLoading ? 0.0 : 1.0),
-          duration: const Duration(milliseconds: 200),
-          child: _isShaking 
-              ? _buildShakingFeedback()
-              : Column(
-                  children: [
-                    Text(
-                      '轻触签筒开启今日喵签',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                    // 只有在摇晃检测可用时才显示摇晃提示
-                    if (_isShakeDetectionAvailable) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.vibration,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '或摇晃手机抽取喵签',
-                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    ],
+          
+          // White transition area at the bottom to blend with the navigation bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 60 + bottomPadding,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(0.0),
+                    Colors.white.withOpacity(0.8),
+                    Colors.white,
                   ],
+                  stops: const [0.0, 0.3, 1.0],
                 ),
-        ),
-      ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
   
   // 新增: 构建摇晃反馈UI
   Widget _buildShakingFeedback() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // 阶段性进度指示器
         Row(
@@ -1278,9 +1500,128 @@ class _DailyFortunePageState extends State<DailyFortunePage>
   FortuneReport _convertToFortuneReport(FortuneData data) {
     return DailyFortuneStaticData.convertToFortuneReport(data);
   }
+
+  // Build background particle widget
+  Widget _buildBackgroundParticle(_BackgroundParticle particle) {
+    Widget particleWidget;
+    
+    switch (particle.shape) {
+      case 0: // Circle
+        particleWidget = Container(
+          width: particle.size,
+          height: particle.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppTheme.primary.withOpacity(particle.opacity),
+          ),
+        );
+        break;
+      case 1: // Square
+        particleWidget = Container(
+          width: particle.size,
+          height: particle.size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            color: AppTheme.primary.withOpacity(particle.opacity),
+          ),
+        );
+        break;
+      case 2: // Star-like shape
+      default:
+        particleWidget = Transform.rotate(
+          angle: particle.x / 100,
+          child: Container(
+            width: particle.size,
+            height: particle.size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  AppTheme.primary.withOpacity(particle.opacity * 1.5),
+                  AppTheme.primary.withOpacity(0),
+                ],
+              ),
+            ),
+          ),
+        );
+        break;
+    }
+    
+    return particleWidget;
+  }
+  
+  void _initBackgroundParticles() {
+    final random = math.Random();
+    _bgParticles.clear();
+    // Reduce number of particles for subtlety
+    for (int i = 0; i < 8; i++) {
+      _bgParticles.add(
+        _BackgroundParticle(
+          x: random.nextDouble() * 400,
+          y: random.nextDouble() * 800,
+          size: 6 + random.nextDouble() * 12, // Smaller particles
+          opacity: 0.05 + random.nextDouble() * 0.12, // More subtle opacity
+          velocity: 0.1 + random.nextDouble() * 0.3, // Slower movement
+          shape: random.nextInt(3),
+        ),
+      );
+    }
+    _animateBackground();
+  }
+  
+  void _animateBackground() {
+    if (!mounted) return;
+    
+    _bgAnimationTimer?.cancel();
+    _bgAnimationTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      setState(() {
+        for (var particle in _bgParticles) {
+          particle.y += particle.velocity;
+          particle.x += math.sin(particle.y / 100) * 0.5;
+          
+          // Reset if out of screen
+          if (particle.y > MediaQuery.of(context).size.height) {
+            particle.y = -particle.size;
+            particle.x = math.Random().nextDouble() * MediaQuery.of(context).size.width;
+          }
+        }
+      });
+    });
+  }
+
+  // Override the "重新抽签" functionality to reset the state
+  void _resetFortune() {
+    setState(() {
+      _currentFortune = null;
+    });
+  }
+
+  // Add this method to handle tapping on the fortune card
+  void _navigateToFortuneDetail() {
+    if (_currentFortune == null) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FortuneReportPage(
+          report: _convertToFortuneReport(_currentFortune!),
+        ),
+      ),
+    ).then((_) {
+      // Add option to reset after coming back from the detail page
+      if (mounted) {
+        // You can decide if you want to reset automatically or not
+        // _resetFortune();
+      }
+    });
+  }
 }
 
-// 移动到顶层：动画卡片部分组件
 class _AnimatedCardSection extends StatefulWidget {
   final Widget child;
   final int delayMs;
@@ -1370,5 +1711,23 @@ class _SakuraParticle {
     required this.y,
     required this.size,
     required this.velocity,
+  });
+}
+
+class _BackgroundParticle {
+  double x;
+  double y;
+  final double size;
+  final double opacity;
+  final double velocity;
+  final int shape; // 0: circle, 1: square, 2: star-like
+
+  _BackgroundParticle({
+    required this.x,
+    required this.y,
+    required this.size,
+    required this.opacity,
+    required this.velocity,
+    required this.shape,
   });
 }

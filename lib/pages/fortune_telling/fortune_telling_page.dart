@@ -255,135 +255,179 @@ class _FortuneTellingPageState extends State<FortuneTellingPage>
 
   @override
   Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom + 20;
+    
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 32),
-                  Center(
+      backgroundColor: Colors.transparent, // Set to transparent to show the gradient
+      body: Container(
+        decoration: BoxDecoration(
+          // Match the gradient from the daily fortune page
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFFFFF6FA),
+              const Color(0xFFFEF0F7),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Main content
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // SvgPicture.asset(
-                        //   'assets/svg/nav_icons/粉-星座占卜.svg',
-                        //   height: 64,
-                        //   width: 64,
-                        // ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '喵咪占卜',
-                          style: AppTheme.titleStyle.copyWith(fontSize: 28),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '让喵仙人为你解读命运的密码',
-                          style: AppTheme.bodyStyle.copyWith(
-                            color: Colors.black54,
-                            fontSize: 14,
+                        const SizedBox(height: 32),
+                        Center(
+                          child: Column(
+                            children: [
+                              // SvgPicture.asset(
+                              //   'assets/svg/nav_icons/粉-星座占卜.svg',
+                              //   height: 64,
+                              //   width: 64,
+                              // ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '喵咪占卜',
+                                style: AppTheme.titleStyle.copyWith(fontSize: 28),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '让喵仙人为你解读未知的密码',
+                                style: AppTheme.bodyStyle.copyWith(
+                                  color: Colors.black54,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  _buildSelectionCard(
-                    title: '选择生辰',
-                    onTap: _toggleDatePicker,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _birthDate == null
-                              ? '请选择日期'
-                              : '${_birthDate!.year}年${_birthDate!.month}月${_birthDate!.day}日',
-                          style: AppTheme.bodyStyle.copyWith(
-                            color:
+                        const SizedBox(height: 48),
+                        _buildSelectionCard(
+                          title: '选择生辰',
+                          onTap: _toggleDatePicker,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
                                 _birthDate == null
-                                    ? Colors.black38
-                                    : Colors.black87,
+                                    ? '请选择日期'
+                                    : '${_birthDate!.year}年${_birthDate!.month}月${_birthDate!.day}日',
+                                style: AppTheme.bodyStyle.copyWith(
+                                  color:
+                                      _birthDate == null
+                                          ? Colors.black38
+                                          : Colors.black87,
+                                ),
+                              ),
+                              Icon(
+                                Icons.calendar_today,
+                                color:
+                                    _birthDate == null
+                                        ? Colors.black38
+                                        : AppTheme.primary,
+                              ),
+                            ],
                           ),
                         ),
-                        Icon(
-                          Icons.calendar_today,
-                          color:
-                              _birthDate == null
-                                  ? Colors.black38
-                                  : AppTheme.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (_isDatePickerVisible)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: CustomDatePicker(
-                        initialDate: _birthDate,
-                        onDateSelected: _onDateSelected,
-                      ),
-                    ),
-                  const SizedBox(height: 32),
-                  _buildSelectionCard(
-                    title: '选择血型',
-                    onTap: () {},
-                    child: _buildBloodTypeSelector(),
-                  ),
-                  const SizedBox(height: 48),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_birthDate != null && _bloodType != null) {
-                          _submitForm();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.smallRadius,
-                          ),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.auto_awesome, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Text(
-                            '开始占卜',
-                            style: AppTheme.titleStyle.copyWith(
-                              color: Colors.white,
-                              fontSize: 18,
+                        if (_isDatePickerVisible)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: CustomDatePicker(
+                              initialDate: _birthDate,
+                              onDateSelected: _onDateSelected,
                             ),
                           ),
-                        ],
-                      ),
+                        const SizedBox(height: 32),
+                        _buildSelectionCard(
+                          title: '选择血型',
+                          onTap: () {},
+                          child: _buildBloodTypeSelector(),
+                        ),
+                        const SizedBox(height: 48),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (_birthDate != null && _bloodType != null) {
+                                _submitForm();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.smallRadius,
+                                ),
+                              ),
+                              elevation: 4,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.auto_awesome, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '开始占卜',
+                                  style: AppTheme.titleStyle.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        if (_birthDate != null && _bloodType != null)
+                          Center(
+                            child: Text(
+                              '喵仙人正在聚集能量...',
+                              style: AppTheme.bodyStyle.copyWith(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        // Add extra space at the bottom to ensure content isn't covered by gradient
+                        SizedBox(height: 80),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  if (_birthDate != null && _bloodType != null)
-                    Center(
-                      child: Text(
-                        '喵仙人正在聚集能量...',
-                        style: AppTheme.bodyStyle.copyWith(
-                          color: Colors.black54,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-          ),
+            
+            // White gradient transition at the bottom
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 60 + bottomPadding,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.8),
+                      Colors.white,
+                    ],
+                    stops: const [0.0, 0.3, 1.0],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
