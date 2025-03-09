@@ -48,6 +48,12 @@ dependencies:
   path_provider: ^2.1.5
   permission_handler: ^11.4.0
   image_gallery_saver: ^2.0.3
+  # Device sensors for shake detection
+  sensors_plus: ^4.0.2
+  # Haptic feedback
+  flutter_vibrate: ^1.3.0
+  # Local storage
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

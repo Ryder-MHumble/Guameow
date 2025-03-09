@@ -66,18 +66,48 @@ class _FortuneTellingReportPageState extends State<FortuneTellingReportPage>
     
     // 使用延迟确保ShareCard已经渲染完成
     Future.delayed(const Duration(milliseconds: 100), () {
-      ShareService.showShareOptions(
-        context, 
-        _shareCardKey,
-        shareText: '我在『卦喵』获得了个人命理详解，推荐你也来试试！',
-      ).then((_) {
-        // 分享完成后隐藏分享卡片
+      try {
+        ShareService.showShareOptions(
+          context, 
+          _shareCardKey,
+          shareText: '我在『卦喵』获得了个人命理详解，推荐你也来试试！',
+        ).then((_) {
+          // 分享完成后隐藏分享卡片
+          if (mounted) {
+            setState(() {
+              _isShareCardVisible = false;
+            });
+          }
+        }).catchError((error) {
+          // 处理分享过程中的错误
+          debugPrint('分享过程出错: $error');
+          if (mounted) {
+            setState(() {
+              _isShareCardVisible = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('分享过程中出现错误，请重试'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
+      } catch (e) {
+        // 处理初始化分享过程中的错误
+        debugPrint('初始化分享过程出错: $e');
         if (mounted) {
           setState(() {
             _isShareCardVisible = false;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('无法初始化分享功能，请重试'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-      });
+      }
     });
   }
 

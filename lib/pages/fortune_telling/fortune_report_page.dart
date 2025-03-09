@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/fortune_report.dart';
 import '../../modules/style/app_theme.dart';
 import '../../data/fortune_static_data.dart';
+import '../../services/share_service.dart';
+import 'widgets/fortune_share_card.dart';
 
 class FortuneReportPage extends StatefulWidget {
   final FortuneReport report;
@@ -18,6 +20,10 @@ class _FortuneReportPageState extends State<FortuneReportPage>
   AnimationController? _controller;
   Animation<double>? _fadeAnimation;
   Animation<Offset>? _slideAnimation;
+  
+  // 添加用于截图的Global Key
+  final GlobalKey _shareCardKey = GlobalKey();
+  bool _isShareCardVisible = false;
 
   @override
   void initState() {
@@ -373,6 +379,59 @@ class _FortuneReportPageState extends State<FortuneReportPage>
     );
   }
 
+  // 显示分享选项
+  void _showShareOptions() {
+    setState(() {
+      _isShareCardVisible = true;
+    });
+    
+    // 使用延迟确保ShareCard已经渲染完成
+    Future.delayed(const Duration(milliseconds: 100), () {
+      try {
+        ShareService.showShareOptions(
+          context, 
+          _shareCardKey,
+          shareText: '我在『卦喵』获得了今日喵签，推荐你也来试试！',
+        ).then((_) {
+          // 分享完成后隐藏分享卡片
+          if (mounted) {
+            setState(() {
+              _isShareCardVisible = false;
+            });
+          }
+        }).catchError((error) {
+          // 处理分享过程中的错误
+          debugPrint('分享过程出错: $error');
+          if (mounted) {
+            setState(() {
+              _isShareCardVisible = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('分享过程中出现错误，请重试'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
+      } catch (e) {
+        // 处理初始化分享过程中的错误
+        debugPrint('初始化分享过程出错: $e');
+        if (mounted) {
+          setState(() {
+            _isShareCardVisible = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('无法初始化分享功能，请重试'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_fadeAnimation == null || _slideAnimation == null) {
@@ -396,30 +455,56 @@ class _FortuneReportPageState extends State<FortuneReportPage>
           ),
         ),
         centerTitle: true,
+        actions: [
+          // 添加分享按钮
+          IconButton(
+            icon: const Icon(Icons.share_rounded, color: Colors.black54),
+            onPressed: _showShareOptions,
+          ),
+        ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation!,
-        child: SlideTransition(
-          position: _slideAnimation!,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeaderCard(),
-                // 运势预测
-                // _buildSectionTitle('运势预测', Icons.visibility),
-                ...widget.report.predictions.map(_buildPredictionCard),
+      body: Stack(
+        children: [
+          // 主内容
+          FadeTransition(
+            opacity: _fadeAnimation!,
+            child: SlideTransition(
+              position: _slideAnimation!,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeaderCard(),
+                    // 运势预测
+                    // _buildSectionTitle('运势预测', Icons.visibility),
+                    ...widget.report.predictions.map(_buildPredictionCard),
 
-                // 开运指南
-                // _buildSectionTitle('开运指南', Icons.auto_awesome),
-                _buildLuckyItemsSection(),
+                    // 开运指南
+                    // _buildSectionTitle('开运指南', Icons.auto_awesome),
+                    _buildLuckyItemsSection(),
 
-                const SizedBox(height: 20),
-              ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+          
+          // 分享卡片 - 隐藏状态，仅用于截图
+          if (_isShareCardVisible)
+            Positioned(
+              left: -2000, // 放在屏幕外
+              child: RepaintBoundary(
+                key: _shareCardKey,
+                child: Container(
+                  width: MediaQuery.of(context).size.width,
+                  color: Colors.white,
+                  child: FortuneShareCard(report: widget.report),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
